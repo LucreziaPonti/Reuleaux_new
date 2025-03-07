@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name = "bp_to_nav" default="true"/>
+
+
+    <!--Running RVIZ for base_placement-->
+    <node pkg="rviz" type="rviz" output="screen" name="$(anon rviz)" args="-d $(find base_placement_plugin)/rviz/base_placement.rviz" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom" />
+
+    <node pkg="sim_tiago_kitchen" type="reuleaux_bp_to_nav" output="screen" name="reuleaux_bp_to_nav" if="$(arg bp_to_nav)" />
+
+
+</launch>

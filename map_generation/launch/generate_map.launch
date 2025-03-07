@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+
+<!--set you robot's moveit pkg here-->
+<arg name = "moveit_pkg" default="tiago_moveit_config"/>
+<arg name = "resolution" default="0.5"/>
+<arg name = "group" default="arm"/>
+
+<!--Launch moveit required pkgs for your robot-->
+<include file="$(find tiago_moveit_config)/launch/demo.launch">
+    <arg name="rviz" value="false"/>
+</include>
+
+
+<!--Node for map generation-->
+<node name="map_gen" pkg="map_generation" type="map_generation_node" output="screen">
+  <param name="group_name" value="$(arg group)" />
+  <param name="pkg_name" value="$(arg moveit_pkg)"/>
+  <param name="resolution" value="$(arg resolution)" />
+  <param name="radius" value="1" />
+  <param name="check_collision" value="true"/>
+  <param name="do_centering" value="true"/>
+  <param name="path" value="$(find map_generation)/maps/" />
+  <param name="filename" value="default" />
+
+</node>
+
+
+
+</launch>

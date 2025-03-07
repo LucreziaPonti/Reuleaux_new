@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+<!-- Selector for tiago type -->
+  <arg name="arm"  default="True"/>
+  <arg name="end_effector"  default="pal-gripper"/>
+  <arg name="ft_sensor"  default="schunk-ft"/>
+  <arg name="laser_model"  default="sick-571"/>
+  <arg name="camera_model"  default="orbbec-astra"/>
+  <arg name="base_type"  default="pmb2"/>
+  <arg name="fixed_torso" default="true" />
+  <arg name="world" default="custom_kitchen" />
+  
+  
+  <arg name="tiago_gazebo" default="false" />
+  
+  
+  <include if="$(arg tiago_gazebo)" file="$(find tiago_gazebo)/launch/tiago_gazebo.launch">
+  <arg name="end_effector" value="$(arg end_effector)"/>
+  <arg name="public_sim" value="true"/>
+  <arg name="tuck_arm" value="false"/>
+  <arg name="world" value="$(arg world)"/>
+  <!--AL MOMENTO NON HO CORRETTO TUTTA QUESTA SEQUENZA DI LAUNCH PER BLOCCARE IL TORSO-->
+  </include>
+    
+    <!-- We do not have a robot connected, so publish fake joint states -->
+    <node unless="$(arg tiago_gazebo)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui">
+      <!--rosparam param="/source_list">[/move_group/fake_controller_joint_states]</rosparam-->
+    </node>
+    <!-- Given the published joint states, publish tf for the robot links -->
+    <node unless="$(arg tiago_gazebo)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+
+    <!-- Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default) -->
+    <include unless="$(arg tiago_gazebo)" file="$(find tiago_moveit_config)/launch/move_group.launch">
+      <arg name="load_robot_description" value="true"/>
+      <arg name="arm" value="$(arg arm)"/>
+      <arg name="end_effector" value="$(arg end_effector)"/>
+      <arg name="ft_sensor" value="$(arg ft_sensor)"/>
+      <arg name="laser_model" value="$(arg laser_model)"/>
+      <arg name="camera_model" value="$(arg camera_model)"/>
+      <arg name="base_type" value="$(arg base_type)"/>
+      <arg name="fixed_torso" value="$(arg fixed_torso)" />
+      <arg name="allow_trajectory_execution" value="true"/>
+      <arg name="fake_execution" value="true"/>
+      <arg name="info" value="true"/>
+    </include>
+ 
+
+  <arg name="moveit_plugin" default="false" />
+  <arg unless="$(arg moveit_plugin)" name="command_args" value="-d $(find base_placement_plugin)/rviz/base_placement.rviz" />
+  <arg     if="$(arg moveit_plugin)" name="command_args" value="-d $(find tiago_moveit_config)/launch/moveit.rviz" />
+
+  <!--Running RVIZ for base_placement-->
+  <node pkg="rviz" type="rviz" output="screen" name="rviz" args="$(arg command_args)" />
+</launch>

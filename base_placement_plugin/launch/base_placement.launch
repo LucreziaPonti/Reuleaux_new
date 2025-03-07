@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name = "moveit_pkg" default="tiago_moveit_config"/>
+
+<!--Launch moveit required pkgs for your -->
+<!--include file="$(find base_placement_plugin)/launch/moveit_pkgs.launch">
+    <arg name="moveit_pkg" value="$(arg moveit_pkg)"/>  
+</include-->
+
+<include file="$(find tiago_moveit_config)/launch/demo.launch">
+    <arg name="rviz" value="false"/>  
+</include>
+
+<node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom" />
+<node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_base_footprint" args="0 0 0 0 0 0 odom base_footprint" />
+
+<!--Running RVIZ for base_placement-->
+<node pkg="rviz" type="rviz" output="screen" name="$(anon rviz)" args="-d $(find base_placement_plugin)/rviz/base_placement.rviz" />
+
+<!--node pkg="sim_tiago_kitchen" type="load_kitchen_planning_scene" output="screen" name="load_kitchen_planning_scene" /-->
+
+</launch>
