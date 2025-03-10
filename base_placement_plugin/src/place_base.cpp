@@ -457,7 +457,7 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
   score_ = 0;
   ros::NodeHandle n;
   //// publisher to send the results to the navigation
-  ros::Publisher bp_pub = n.advertise<geometry_msgs::Pose>("reuleaux_bp_to_nav/bp_poses", 1000);
+  ros::Publisher bp_pub = n.advertise<geometry_msgs::Pose>("reule_aux/bp_results", 1000);
   if (grasp_poses.size() == 0)
     ROS_ERROR_STREAM("Please provide atleast one grasp pose.");
 

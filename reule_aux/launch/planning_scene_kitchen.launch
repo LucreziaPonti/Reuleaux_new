@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <!--OLNY TO BE LAUNCHED AFTER HAVING LAUNCHED GAZEBO_OBJECT_RECOGNITION (in grasp>moveit_pkgs>moveit_object_handling) 
+    AND THE GAZEBO SIM WITH THE PLUGIN (tiago_navigation.launch in this case)-->
+
+    <arg name="tables"   default="true"/>
+    <arg name="objects"  default="true"/>
+
+    <node if="$(arg tables)" name="recognize_table_pick" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd" respawn="false" output="screen" args="table_pick 0"/>
+    <node if="$(arg tables)" name="recognize_sink_furniture" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd"  args="sink_furniture 0"/>
+
+
+
+    <node if="$(arg objects)" name="recognize_pringles" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd"  respawn="false" output="screen" args="pringles 0"/>
+    <node if="$(arg objects)" name="recognize_mug" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd"  respawn="false" output="screen" args="blue_mug 0"/>
+    <node if="$(arg objects)" name="recognize_sprite" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd"  respawn="false" output="screen" args="sprite 0"/>
+    <node if="$(arg objects)" name="recognize_pringles2" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd"  respawn="false" output="screen" args="pringles2 0"/>
+    <node if="$(arg objects)" name="recognize_chairs" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd"  respawn="false" output="screen" args="kitchen_no_sink 0"/>
+    <node if="$(arg objects)" name="recognize_box" pkg="gazebo_test_tools" type="fake_object_recognizer_cmd"  respawn="false" output="screen" args="box 0"/>
+
+</launch>
