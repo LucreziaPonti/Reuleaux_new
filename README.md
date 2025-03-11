@@ -20,14 +20,19 @@ The other packages used in this thesis work are:
 
 ## Setup
 - ROS Noetic INSTALLATION: https://wiki.ros.org/noetic/Installation/Ubuntu
-- Useful packages: 
+- Install OTHER IMPORTANT PKGs : 
     ```
-    sudo apt-get install git wget ipython3 python3-catkin-tools python-is-python3 
+    sudo apt-get install git wget ipython3 python3-catkin-tools python-is-python3 ros-noetic-rviz-visual-tools
     ```
-- INSTALL MOVEIT from pre-built binaries :  
+- Install MOVEIT from pre-built binaries :  
     ```
     sudo apt install ros-noetic-moveit
     ```
+- Install "additional" PKGs for BP_TO_NAV **!!!!! check se lo metto effettivamente**:
+    ```
+    sudo apt install ros-noetic-navigation
+    ```
+- Create a workspace and clone the repository in the src folder 
 - ROBOT INFORMATION: for this package to work you will need (*atleast*) the *robot*_moveit_config package in order to have the robot description and the kinematic solver available through MoveIt! - for a better use is of course recommended to have the full packages to simulate the robot. 
 - ** *at the moment* ** ROBOT SETUP: in map_creator>include>map_creator add the *robot*_ikfast_solver.cpp and add "#include *robot*_ikfast_solver.cpp" in the kinematics.h file 
 

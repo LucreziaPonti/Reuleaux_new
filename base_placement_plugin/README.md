@@ -6,7 +6,7 @@ There are a few different options to use the plugin:
   ```
   roslaunch base_placement_plugin base_placement.launch
   ```
-  - optional argument **bp_results** : allows to run an additional node (for this work is reuleaux_bp_to_nav) that subscribes to the topic *reule_aux/bp_results* to receive the results and elaborate them as needed- default = *false* 
+  - optional argument **bp_results** : allows to run an additional node (for this work is reuleaux_bp_to_nav) that subscribes to the topic *reule_aux/bp_results* to receive the results and elaborate them as needed - default = *false* 
 
 2. The plugin + the robot (with Moveit! demo):
   ```
@@ -46,4 +46,10 @@ Set the desired output visualization method.
 When everything is set up, press the Find Base button. It will show the base locations.
 
 If you want to see the union map, press the show union map button.
+
+## ATTENTION
+For how the computation is done not all visualization methods can be used with all the resolution methods and viceversa:
+
+- UserIntuition and VerticalRobotModel can **NOT** use the MANIPULATOR visualization (because they compute the *robot base* pose)
+- RobotModel can NOT be used for the methods PrincipalComponentsArray, GraspReachabilityScore, IKSolutionScore (because they compute the *arm base* pose)
 

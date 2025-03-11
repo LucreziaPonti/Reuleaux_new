@@ -2,16 +2,17 @@
 <launch>
 
 <arg name = "robot_name" default="tiago"/>
-<arg name = "moveit_pkg" default="$(arg robot_name)_moveit_config"/>
+<arg name="bp_results" default="false"/>
 
-
-<include file="$(find tiago_moveit_config)/launch/demo.launch">
+<include file="$(find $(arg robot_name)_moveit_config)/launch/demo.launch">
     <arg name="rviz" value="false"/>  
 </include>
 
 
 <!--Running RVIZ for base_placement-->
-<node pkg="rviz" type="rviz" output="screen" name="$(anon rviz)" args="-d $(find base_placement_plugin)/rviz/base_placement.rviz" />
+<include file="$(find base_placement_plugin)/launch/base_placement.launch">
+    <arg name="bp_results" value="false"/>  
+</include>
 
 <!--TIAGo specific requirements - delete or comment out if not needed-->
 <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom" />

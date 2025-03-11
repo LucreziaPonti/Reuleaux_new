@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
   moveit_core
   eigen_conversions
+  reule_aux
 )
 
 find_package(HDF5 REQUIRED)
@@ -75,6 +76,7 @@ catkin_package(
   rviz
   visualization_msgs
   map_creator
+  reule_aux
 )
 
 if(rviz_QT_VERSION VERSION_LESS "5")

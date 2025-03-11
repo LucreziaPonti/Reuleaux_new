@@ -24,9 +24,10 @@
 #include <tf2/LinearMath/Vector3.h>
 
 
-#include<visualization_msgs/InteractiveMarker.h>
-#include<interactive_markers/interactive_marker_server.h>
+#include <visualization_msgs/InteractiveMarker.h>
+#include <interactive_markers/interactive_marker_server.h>
 
+#include <reule_aux/BP_Res.h>
 
 PlaceBase::PlaceBase(QObject *parent)
 {
@@ -197,7 +198,7 @@ void PlaceBase::setBasePlaceParams(int base_loc_size, int high_score_sp)
 }
 
 //Creating <spheres, ri> and <highscoringsp> multimap from the <sphere, poses> the bool determines wherther to make it 2d/3d
-void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses,
+void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses, /*baseTrnsCol*/
                    std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp, bool reduce_D)
 {
   ros::NodeHandle nn;
@@ -209,19 +210,17 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
   {
     int num = basePoses.count(it->first);
     poseCount.push_back(num);
-    //// takes the values of the spheres (i think) and stores them into poseCount
   }
   std::vector<int>::const_iterator it;
   it = max_element(poseCount.begin(), poseCount.end());
   int max_number = *it;
   it = min_element(poseCount.begin(), poseCount.end());
   int min_number = *it;
-  if(reduce_D) //// reduce_D=true -- "cuts" the sphere distribution of the IRM in the plane (from 3D to 2D) for VerticalRobotModel
+  if(reduce_D) // reduce_D=true -- "cuts" the sphere distribution of the IRM in the plane (from 3D to 2D) for VerticalRobotModel
   {
-    ////!!! assuming that the union map content has already been transformed from arm_base (arm_1_link) to robot_base poses (base_footprint)
     for (std::multimap< std::vector< double >, std::vector< double > >::iterator it = basePoses.begin(); it != basePoses.end();++it)
     {
-      if((it->first)[2] < 0.06 && (it->first)[2] > -0.06) //// spheres on the ground 
+      if((it->first)[2] < 0.06 && (it->first)[2] > -0.06) // poses on the ground 
       {
         geometry_msgs::Pose prob_base_pose;
         prob_base_pose.position.x = (it->first)[0];
@@ -263,7 +262,7 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
       FilterCollisionPoses filter;
       if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, true)){ 
         //true = NOT IN COLLISION with any collision object of the planning scene -- acceptable base pos
-        float d = ((float(basePoses.count(it->first))- min_number)/ (max_number - min_number)) * 100;
+        float d = ((float(basePoses.count(it->first))- min_number)/ (max_number - min_number)) * 100; //PLACE_BASE index
         if(d>1){
           spColor.insert(std::pair< std::vector< double >, double >(it->first, double(d)));
         }
@@ -271,14 +270,14 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
     }
   }
 
- std::multiset<std::pair<double, std::vector<double> > > scoreWithSp; ////ordered structure containing poses and scores ORDERED BY SCORE (low to high)
+ std::multiset<std::pair<double, std::vector<double> > > scoreWithSp; // ordered structure containing scored and sphere poses ORDERED BY SCORE (low to high)
  for(std::map<std::vector<double>, double>::iterator it = spColor.begin(); it !=spColor.end();++it )
  {
    scoreWithSp.insert(std::pair<double, std::vector<double> >(it->second, it->first));
  }
  for (std::multiset< std::pair< double, std::vector< double > > >::reverse_iterator it = scoreWithSp.rbegin();it != scoreWithSp.rend(); ++it)
  {
-   highScoredSp.push_back(it->second); //// ordered structure containing poses and scores ORDERED BY SCORE (high to low)
+   highScoredSp.push_back(it->second); // ordered structure containing only the sphere poses ORDERED BY SCORE (high to low)
  }
   ROS_INFO("finished creating UNION MAP");
 }
@@ -289,35 +288,62 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
   kinematics::Kinematics k;
   float total_score = 0;
   float max_score = 0;
-  ROS_DEBUG(" inizio calc score. con %d poses",base_poses.size());
+  
+  ros::NodeHandle n;
+  ros::Publisher bp_pub = n.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
+  reule_aux::BP_Res bp_res;
+
+  ROS_DEBUG(" start calc score with %ld poses",base_poses.size());
   geometry_msgs::Pose best_pose;
-  for(int i=0;i<base_poses.size();i++)
-  {
+  for(int i=0;i<base_poses.size();i++){
     geometry_msgs::Pose base_pose_at_arm;
     transformFromRobotbaseToArmBase(base_poses[i], base_pose_at_arm);
-    ROS_DEBUG("trasformo base pose %d a arm pose",i);
+    ROS_DEBUG("trasform base pose %d to arm pose",i);
     int num_of_solns = 0;
-    for(int j=0;j<grasp_poses.size();j++)
-    {
+    for(int j=0;j<grasp_poses.size();j++){
       std::vector<double> joint_soln;
       int nsolns = 0;
       k.isIkSuccesswithTransformedBase(base_pose_at_arm, grasp_poses[j], joint_soln, nsolns);
       num_of_solns +=nsolns;
     }
-    float d = (float(num_of_solns)/float(grasp_poses.size()*8))*100;
-    ROS_DEBUG("calcolo score %d : %f",i,d);
-    if(d>max_score)
-    {
+    float d = (float(num_of_solns)/float(grasp_poses.size()*8))*100; //// review questo calcolo
+    ROS_DEBUG("score of pose %d : %f",i,d);
+    if(d>max_score){
       max_score = d;
       best_pose = base_poses[i];
-      ROS_DEBUG("base pose %d è la best per ora",i);
+      ROS_DEBUG("base pose %d is the best for now",i);
     }
     total_score +=d;
+
+    // publishing (publish all the poses as not the best - also the one that will be considered the best)
+    bp_res.best_pose=false;
+    bp_res.pose = base_poses[i];
+    bp_res.score = d;
+    bp_pub.publish(bp_res);
+    // printing the results in the terminal for check 
+    tf2::Quaternion quat(base_poses[i].orientation.x, base_poses[i].orientation.y, base_poses[i].orientation.z, base_poses[i].orientation.w);
+    tf2::Matrix3x3 m(quat);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) - Score: %.2f", i + 1, base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, roll,pitch, yaw,d);
   }
   ROS_DEBUG("total score= %f",total_score);
   best_pose_ = best_pose;
-  double score = double(total_score/float(base_poses.size()));
-  ROS_DEBUG(" score= %f",score);
+
+  // publishing of the best pose (remember that this pose has also been published before - create the node that receives them so that it is accounted for)
+  bp_res.best_pose=true;
+  bp_res.pose = best_pose;
+  bp_res.score = max_score;
+  bp_pub.publish(bp_res);
+  // printing the results in the terminal for check 
+  tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
+  tf2::Matrix3x3 m(quat);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+  ROS_INFO("Best pose for this solution: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)", best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, roll,pitch, yaw);
+  
+    double score = double(total_score/float(base_poses.size()));
+  ROS_DEBUG("Average score= %f",score);
   return score;
 }
 
@@ -327,6 +353,11 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
   kinematics::Kinematics k;
   float total_score = 0;
   float max_score = 0;
+
+  ros::NodeHandle n;
+  ros::Publisher bp_pub = n.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
+  reule_aux::BP_Res bp_res;
+
   geometry_msgs::Pose best_pose;
   for(int i=0;i<base_poses.size();i++)
   {
@@ -339,34 +370,40 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
       num_of_solns +=nsolns;
     }
     float d = (float(num_of_solns)/float(grasp_poses.size()*8))*100;
-    //extra ros info for screen --- togliere 
-        tf2::Quaternion quat(base_poses[i].orientation.x, base_poses[i].orientation.y,
-                             base_poses[i].orientation.z, base_poses[i].orientation.w);
-        tf2::Matrix3x3 m(quat);
-
-        double roll, pitch, yaw;
-        m.getRPY(roll, pitch, yaw);
-        ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) - Score: %.2f", i + 1,
-                 base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, roll,pitch, yaw,d);
-    if(d>max_score)
-    {
+    
+    // publishing (publish all the poses as not the best - also the one that will be considered the best)
+    bp_res.best_pose=false;
+    bp_res.pose = base_poses[i];
+    bp_res.score = d;
+    bp_pub.publish(bp_res);
+    // printing the results in the terminal for check 
+    tf2::Quaternion quat(base_poses[i].orientation.x, base_poses[i].orientation.y, base_poses[i].orientation.z, base_poses[i].orientation.w);
+    tf2::Matrix3x3 m(quat);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) - Score: %.2f", i + 1, base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, roll,pitch, yaw,d);
+    if(d>max_score){
       max_score = d;
       best_pose = base_poses[i];
     }
     total_score +=d;
   }
   best_pose_ = best_pose;
-  //extra ros info for screen --- togliere 
-        tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y,
-                             best_pose_.orientation.z, best_pose_.orientation.w);
-        tf2::Matrix3x3 m(quat);
 
-        double roll, pitch, yaw;
-        m.getRPY(roll, pitch, yaw);
-        ROS_INFO("Best pose for this solution: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)",
-                 best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, roll,pitch, yaw);
+  // publishing of the best pose (remember that this pose has also been published before - create the node that receives them so that it is accounted for)
+  bp_res.best_pose=true;
+  bp_res.pose = best_pose;
+  bp_res.score = max_score;
+  bp_pub.publish(bp_res);
+  // printing the results in the terminal for check 
+  tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
+  tf2::Matrix3x3 m(quat);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+  ROS_INFO("Best pose for this solution: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)", best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, roll,pitch, yaw);
+  
   double score = double(total_score/float(base_poses.size()));
-        ROS_INFO("Score average = %.2f",score);
+  ROS_INFO("Score average = %.2f",score);
   return score;
 }
 
@@ -447,39 +484,45 @@ void PlaceBase::transformToRobotbase(std::multimap< std::vector< double >, std::
 
 bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
 {
-  /*! The main function that finds the base. First it transforms all the poses form the loaded inverse reachability
-   * file with the grasp poses selected by the user. Then by nearest neighbor searching it associates all the poses
-   * to the corresponding spheres. By normalization it decides the color of the spheres. Then from the highest scoring
-   * spheres it calls the desired methods for finding the final base locations.
+  /*! The main function that finds the base. 
+   * If the method is UserIntuition it does not need to create the union map, but only evaluates the poses given by the user to find the best
+   * First it transforms all the poses from the loaded inverse reachability file with the grasp poses selected by the user -> PoseColFilter
+   * Then (the function associatePose) by nearest neighbor searching it associates all the poses to the corresponding spheres -> baseTrnsCol
+   * In the function createSpheres:
+   *      By normalization it decides the color of the spheres. -> sphereColor contains elements <sphere, score (=color)> (used only for VISUALIZATION from here on)
+   *      Then from the highest scoring spheres it calls the desired methods for finding the final base locations. -> highScoreSp contains sphere poses ordered by score
+    SO baseTrnsCol contains all the poses (voxel_pose,base_pose), highScoreSp contains all the Spheres ordered by score
   */
 
   Q_EMIT basePlacementProcessStarted();
   score_ = 0;
-  ros::NodeHandle n;
-  //// publisher to send the results to the navigation
-  ros::Publisher bp_pub = n.advertise<geometry_msgs::Pose>("reule_aux/bp_results", 1000);
+    
   if (grasp_poses.size() == 0)
     ROS_ERROR_STREAM("Please provide atleast one grasp pose.");
 
-  else if(selected_method_ == 4) ////metodo user intuition - non gli serve controllare l'inverse reachability prima di fare baseplace... (I guess)
+  else if(selected_method_ == 4) // UserIntuition - no need to create the union map
   {
     GRASP_POSES_ = grasp_poses;
-    BasePlaceMethodHandler();
-    for (int i = 0; i < final_base_poses.size(); ++i)
-    {
-      //Transforming the poses, as all are pointing towards
+    ROS_INFO("Start of computation of the base placement");
+    BasePlaceMethodHandler(); 
+    // Here depending on the method is done the evaluation of the poses and the score is calculated
+    // once the poses are found and the score is calculated the results are also published on the topic reule_aux/bp_results
+    /* OLD FOR CYCLE THAT PRINTED THE RESULTS - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
+      for (int i = 0; i < final_base_poses.size(); ++i)
+      {
+        //Transforming the poses, as all are pointing towards
 
-      tf2::Quaternion quat(final_base_poses[i].orientation.x, final_base_poses[i].orientation.y,
-                           final_base_poses[i].orientation.z, final_base_poses[i].orientation.w);
-      tf2::Matrix3x3 m(quat);
+        tf2::Quaternion quat(final_base_poses[i].orientation.x, final_base_poses[i].orientation.y,
+                            final_base_poses[i].orientation.z, final_base_poses[i].orientation.w);
+        tf2::Matrix3x3 m(quat);
 
-      double roll, pitch, yaw;
-      m.getRPY(roll, pitch, yaw);
-      bp_pub.publish(final_base_poses[i]);
-      ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1,
-               final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll,
-               pitch, yaw);
-    }
+        double roll, pitch, yaw;
+        m.getRPY(roll, pitch, yaw);
+        ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1, final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll, pitch, yaw);
+      }
+    */
+
+    ROS_INFO("Computation done. Start visualization");
     OuputputVizHandler(final_base_poses);
 
 
@@ -493,17 +536,17 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       sphereColor.clear();
       highScoreSp.clear();
       robot_PoseColfilter.clear();
-      GRASP_POSES_ .clear();
+      GRASP_POSES_.clear();
 
       final_base_poses.clear();
       GRASP_POSES_ = grasp_poses;
 
-      if(selected_method_ == 3)       {//// findBaseByVerticalRobotModel - devo estendere alla base del robot (dalla base del braccio)
-        transformToRobotbase(PoseColFilter, robot_PoseColfilter);
+      if(selected_method_ == 3) {// findBaseByVerticalRobotModel - extends the computation from the arm base to the base of the entire robot
+        transformToRobotbase(PoseColFilter, robot_PoseColfilter); // transforms IRM so that it contains robot base poses instead of arm base
         sd.associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res); //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
         ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
         createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
-      }else{
+      }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
         sd.associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res);
         ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
         createSpheres(baseTrnsCol, sphereColor, highScoreSp, false);
@@ -513,42 +556,38 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       ROS_INFO("Poses in Union Map: %lu", baseTrnsCol.size());
       ROS_INFO("Spheres in Union Map: %lu", sphereColor.size());
 
-
-      BasePlaceMethodHandler();
+      ROS_INFO("Start of computation of the base placement");
+      BasePlaceMethodHandler(); // depending on the method the poses are found (and stored in final_base_poses) and they are published on reule_aux/bp_results
       
-      for (int i = 0; i < final_base_poses.size(); ++i)
-      {
-        //Transforming the poses, as all are pointing towards
+      /* OLD FOR CYCLE THAT PRINTED THE RESULTS - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
+        for (int i = 0; i < final_base_poses.size(); ++i)
+        {
+          //Transforming the poses, as all are pointing towards
 
-        tf2::Quaternion quat(final_base_poses[i].orientation.x, final_base_poses[i].orientation.y,
-                             final_base_poses[i].orientation.z, final_base_poses[i].orientation.w);
-        tf2::Matrix3x3 m(quat);
+          tf2::Quaternion quat(final_base_poses[i].orientation.x, final_base_poses[i].orientation.y,
+                              final_base_poses[i].orientation.z, final_base_poses[i].orientation.w);
+          tf2::Matrix3x3 m(quat);
 
-        double roll, pitch, yaw;
-        m.getRPY(roll, pitch, yaw);
-        bp_pub.publish(final_base_poses[i]);
-        ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1,
-                 final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll,
-                 pitch, yaw);
-      }
-
-      // showBaseLocations(final_base_poses); //outdated function
-      OuputputVizHandler(final_base_poses);  //// function to have different showBaseLocations methods
+          double roll, pitch, yaw;
+          m.getRPY(roll, pitch, yaw);
+          ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1, final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll, pitch, yaw);
+        }
+      */
+      
+      ROS_INFO("Computation done. Start visualization");
+      OuputputVizHandler(final_base_poses);  // function to have different showBaseLocations methods
     }
   }
+  /* OLD PRINT OF THE BEST POSE - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
+    tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
+    tf2::Matrix3x3 m(quat);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    ROS_INFO("Best pose for this solution: Position: %f, %f, %f, Orientation: %f, %f, %f",
+                  best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, roll,pitch, yaw);
+ */
 
-  tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
-  tf2::Matrix3x3 m(quat);
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-  ROS_INFO("Best pose for this solution: Position: %f, %f, %f, Orientation: %f, %f, %f",
-                 best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, roll,pitch, yaw);
-  bp_pub.publish(best_pose_);
-
-  geometry_msgs::Pose stop;
-  bp_pub.publish(stop);
-
-  //double s = calculateScoreForRobotBase(GRASP_POSES_, final_base_poses);
+   
   Q_EMIT basePlacementProcessCompleted(score_);
 
   Q_EMIT basePlacementProcessFinished();
@@ -652,7 +691,7 @@ void PlaceBase::findBaseByVerticalRobotModel()
   }
 
   for(int i=0;i<BASE_LOC_SIZE_;++i)
-  { ////stores only the ones with highest score, as many as requested by user
+  { // stores only the ones with highest score, as many as requested by user
     base_poses_user.push_back(base_poses[i]);
   }
 ROS_DEBUG("-- finito di fare le base poses in vertical rob mod - chiamiamo calculate score");
@@ -696,8 +735,7 @@ void PlaceBase::findBaseByPCA()
   for (int i = 0; i < ws.WsSpheres.size(); ++i)
   {
     geometry_msgs::Pose final_base_pose;
-    //sd.findOptimalPosebyAverage(ws.WsSpheres[i].poses, final_base_pose);  // Calling the PCA
-
+    
     sd.findOptimalPosebyPCA(ws.WsSpheres[i].poses, final_base_pose);  // Calling the PCA..After the normalization the results seem suitable
     final_base_pose.position.x = ws.WsSpheres[i].point.x;
     final_base_pose.position.y = ws.WsSpheres[i].point.y;
@@ -746,7 +784,7 @@ void PlaceBase::findBaseByGraspReachabilityScore()
       probBasePoses.push_back(pp);
              
     }
-    //std::multiset< std::pair< int, geometry_msgs::Pose > > basePoseWithHits;
+    
     std::map<int, geometry_msgs::Pose> basePoseWithHits;
     for(int j=0;j<probBasePoses.size();j++)
     {
@@ -800,7 +838,7 @@ void PlaceBase::findBaseByIKSolutionScore()
       probBasePoses.push_back(pp);
        
     }
-    //std::multiset< std::pair< int, geometry_msgs::Pose > > basePoseWithHits;
+    
     std::map<double, geometry_msgs::Pose> basePoseWithHits;
     for(int j=0;j<probBasePoses.size();j++)
     {

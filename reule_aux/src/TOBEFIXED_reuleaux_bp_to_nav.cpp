@@ -1,4 +1,6 @@
 /*
+    IGNORE FOR NOW -- IT NEEDS TO BE FIXED
+
  waits for navigation to be available (wait for action move_base i think)
 
  receives the optimal bp (via service) from reuleaux bpp or from terminal 

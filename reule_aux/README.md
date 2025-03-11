@@ -5,7 +5,7 @@ Auxiliary package for reuleaux's original packages.
 It contains the definition of new messages, services useful in the packages (mainly base_placement_plugin)
 
 ## New messages and topics
-- **reule_aux/bp_results** is the new topic used in the BPP (see base_placement_plugin>src>place_base.cpp>findbase()) to publish messages (of the new type *BP_Res* defined here - see msgs) containing the poses obtained with the plugin
+- **reule_aux/bp_results** is the new topic used in the BPP (see base_placement_plugin>src>place_base.cpp) to publish messages (of the new type *BP_Res* defined here - see msgs) containing the poses obtained with the plugin
 
 ## Launch
 - To use the reuleaux base placement plugin (and reuleaux_bp_to_nav): 

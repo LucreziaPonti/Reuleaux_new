@@ -1,3 +1,3 @@
-bool best
+bool best_pose
 int32 score
-geometry_msgs/Pose Pose
+geometry_msgs/Pose pose

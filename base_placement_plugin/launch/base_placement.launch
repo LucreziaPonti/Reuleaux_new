@@ -6,7 +6,7 @@
     <!--Running RVIZ for base_placement-->
     <node pkg="rviz" type="rviz" output="screen" name="$(anon rviz)" args="-d $(find base_placement_plugin)/rviz/base_placement.rviz" />
 
-    <!--node pkg="reule_aux" type="reuleaux_bp_to_nav" output="screen" name="reuleaux_bp_to_nav" if="$(arg bp_results)" /--nm,>
+    <!--node pkg="reule_aux" type="reuleaux_bp_to_nav" output="screen" name="reuleaux_bp_to_nav" if="$(arg bp_results)" /-->
 
 
 </launch>
