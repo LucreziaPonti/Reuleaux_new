@@ -249,8 +249,15 @@ void BasePlacementWidget::pointAddUI()
   ry = DEG2RAD(ui_.LineEditRy->text().toDouble());
   rz = DEG2RAD(ui_.LineEditRz->text().toDouble());
 
-  // // create transform
-  tf::Transform point_pos(tf::Transform(tf::createQuaternionFromRPY(rx, ry, rz), tf::Vector3(x, y, z)));
+  // Create quaternion from roll, pitch, yaw and normalize
+  tf::Quaternion quaternion = tf::createQuaternionFromRPY(rx, ry, rz);
+  quaternion.normalize();
+
+  // Create transform
+  tf::Transform point_pos(quaternion, tf::Vector3(x, y, z));
+
+   // OLD  create transform
+   //tf::Transform point_pos(tf::Transform(tf::createQuaternionFromRPY(rx, ry, rz), tf::Vector3(x, y, z)));
   Q_EMIT addPoint(point_pos);
 
   pointRange();
@@ -478,8 +485,11 @@ void BasePlacementWidget::treeViewDataChanged(const QModelIndex& index, const QM
     rx = DEG2RAD(orient_x.toDouble());
     ry = DEG2RAD(orient_y.toDouble());
     rz = DEG2RAD(orient_z.toDouble());
+    // Create quaternion from roll, pitch, yaw and normalize before creating the transform
+    tf::Quaternion quaternion = tf::createQuaternionFromRPY(rx, ry, rz);  
+    quaternion.normalize(); 
 
-    tf::Transform point_pos = tf::Transform(tf::createQuaternionFromRPY(rx, ry, rz), p);
+    tf::Transform point_pos = tf::Transform(quaternion, p);
 
     Q_EMIT pointPosUpdated_signal(point_pos, temp_str.c_str());
   }
@@ -551,6 +561,9 @@ void BasePlacementWidget::loadPointsFromFile()
       rx = DEG2RAD(rx);
       ry = DEG2RAD(ry);
       rz = DEG2RAD(rz);
+      // Create quaternion from roll, pitch, yaw and normalize before creating the transform
+      tf::Quaternion quaternion = tf::createQuaternionFromRPY(rx, ry, rz);  
+      quaternion.normalize();     
 
       pose_tf = tf::Transform(tf::createQuaternionFromRPY(rx, ry, rz), tf::Vector3(x, y, z));
 
@@ -582,6 +595,7 @@ void BasePlacementWidget::clearAllPoints_slot()
 
   Q_EMIT clearAllPoints_signal();
 }
+
 void BasePlacementWidget::setAddPointUIStartPos(const tf::Transform end_effector)
 {
   /*! Setting the default values for the Add New Way-Point from the RQT.

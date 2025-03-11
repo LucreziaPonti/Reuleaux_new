@@ -14,6 +14,7 @@
   <run_depend>map_creator</run_depend>
   <run_depend>map_generation</run_depend>
   <run_depend>workspace_visualization</run_depend>
+  <run_depend>reule_aux</run_depend>
   <run_depend>base_placement_plugin</run_depend>
 
   <export>
