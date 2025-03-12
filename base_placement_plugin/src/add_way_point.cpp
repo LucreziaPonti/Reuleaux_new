@@ -393,7 +393,6 @@ visualization_msgs::InteractiveMarkerControl& AddWayPoint::makeArrowControlDetai
   
   control_view_details.name = "rotate_y";
   control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
-
   msg.controls.push_back(control_view_details);
 
   control_view_details.name = "move_y";
@@ -745,7 +744,7 @@ void AddWayPoint::getRobotModelFrame_slot(const tf::Transform end_effector)
      the RQT Widget.
   */
 
-  target_frame_.assign("map");
+  target_frame_.assign("world");
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
 
   box_pos = end_effector;

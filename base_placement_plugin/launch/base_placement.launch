@@ -1,7 +1,14 @@
 <?xml version="1.0"?>
 <launch>
 
+    <arg name = "adjust_frame" default="false"/>
+    <arg name = "robot_fixed_frame" default="base_link"/>
     <arg name = "bp_results" default="false"/>
+
+
+    <!--Fixed frame for the plugin-->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="BPPtoROBOT_fixed_frame" args="0 0 0 0 0 0 bpp_fixed_frame $(arg robot_fixed_frame)" if="$(arg adjust_frame)"/>
+
 
     <!--Running RVIZ for base_placement-->
     <node pkg="rviz" type="rviz" output="screen" name="$(anon rviz)" args="-d $(find base_placement_plugin)/rviz/base_placement.rviz" />

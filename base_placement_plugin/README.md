@@ -7,12 +7,19 @@ There are a few different options to use the plugin:
   roslaunch base_placement_plugin base_placement.launch
   ```
   - optional argument **bp_results** : allows to run an additional node (for this work is reuleaux_bp_to_nav) that subscribes to the topic *reule_aux/bp_results* to receive the results and elaborate them as needed - default = *false* 
+  - optional argument **adjust_frame** : when true a new tf is published to "connect" the generalized fixed frame of the plugin (*bpp_fixed_frame*) to the fixed frame of the robot (which needs to be set with the next arg) - default = *false*
+  - optional argument **robot_fixed_frame** : allows to set the fixed frame of the robot - default : *base_link* (may change the default depending on the robot used)
 
 2. The plugin + the robot (with Moveit! demo):
   ```
   roslaunch base_placement_plugin robot_base_placement.launch
   ```
-  - optional argument **robot_name** : allows to choose which robot to use with the plugin - default = *tiago*
+  - **ATTENTION**: change in the launch file the name of the  *robot*_moveit_config pkg to use the correct one
+  - optional argument **bp_results** : allows to run an additional node (for this work is reuleaux_bp_to_nav) that subscribes to the topic *reule_aux/bp_results* to receive the results and elaborate them as needed - default = *false* 
+  - optional argument **adjust_frame** : when true a new tf is published to "connect" the generalized fixed frame of the plugin (*bpp_fixed_frame*) to the fixed frame of the robot (which needs to be set with the next arg) - default = *false*
+  - optional argument **robot_fixed_frame** : allows to set the fixed frame of the robot - default : *base_link* (may change the default depending on the robot used) 
+
+**ATTENTION** when choosing the fixed frame that you don't have other parent frames to that frame (e.g. when launching with the moveit demo it usually has a "world" frame automatically put as a parent to the base link of the robot - in that case the "frame adjusting" is not needed)
 
 3. Manually setup the Rviz window:
   ```
@@ -22,6 +29,7 @@ There are a few different options to use the plugin:
   - Add a reachability map display and set the topic to /reachability_map
   - Add an Interactive Marker display and set the topic to /base_placement_plugin/update
   - Add a markerArray display. Set the topic to /visualization_marker_array
+
 
 
 ## WORK THE PLUGIN

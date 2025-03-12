@@ -108,7 +108,7 @@ void CreateMarker::updateMarkers(const geometry_msgs::Pose& base_pose, bool is_r
   double b = unifRand();
   for(std::size_t j=0;j<markers.markers.size();j++)
   {
-    markers.markers[j].header.frame_id = "map";
+    markers.markers[j].header.frame_id = "world";
     markers.markers[j].type = visualization_msgs::Marker::MESH_RESOURCE;
     markers.markers[j].mesh_use_embedded_materials = true;
     markers.markers[j].id = j*5;
@@ -163,7 +163,7 @@ void CreateMarker::makeIntMarkerControl(const geometry_msgs::Pose& base_pose, co
 void CreateMarker::createInteractiveMarker(const geometry_msgs::Pose& base_pose, const std::vector<double>& joint_soln,
                                            const int& num, bool arm_only, bool is_reachable,visualization_msgs::InteractiveMarker& iMarker)
 {
-  iMarker.header.frame_id = "map";
+  iMarker.header.frame_id = "world";
   iMarker.pose = base_pose;
   iMarker.scale = 0.3;
   std::string name = "robot_model";

@@ -1,22 +1,26 @@
 <?xml version="1.0"?>
-<launch>
+    <launch>
 
-<arg name = "robot_name" default="tiago"/>
-<arg name="bp_results" default="false"/>
+    <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
+    <arg name = "robot_fixed_frame" default="world"/>
+    <arg name="adjust_frame" default="true"/>
 
-<include file="$(find $(arg robot_name)_moveit_config)/launch/demo.launch">
-    <arg name="rviz" value="false"/>  
-</include>
+    <arg name="bp_results" default="false"/>
 
+    <include file="$(find panda_moveit_config)/launch/demo.launch"> <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
+        <arg name="use_rviz" value="false"/>  
+    </include>
 
-<!--Running RVIZ for base_placement-->
-<include file="$(find base_placement_plugin)/launch/base_placement.launch">
-    <arg name="bp_results" value="false"/>  
-</include>
+    <!--Running RVIZ for base_placement-->
+    <include file="$(find base_placement_plugin)/launch/base_placement.launch">
+        <arg name="bp_results" value="$(arg bp_results)"/>   
+        <arg name="adjust_frame" value="$(arg adjust_frame)"/>
+        <arg name="robot_fixed_frame" value="$(arg robot_fixed_frame)"/>
+    </include>
 
-<!--TIAGo specific requirements - delete or comment out if not needed-->
-<node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom" />
-<node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_base_footprint" args="0 0 0 0 0 0 odom base_footprint" />
+    <!--TIAGo specific requirements - delete or comment out if not needed>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_base_footprint" args="0 0 0 0 0 0 odom base_footprint" /-->
 
 
 </launch>

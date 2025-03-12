@@ -63,10 +63,8 @@ void AddRobotBase::init()
   menu_handler.setCheckState(menu_handler.insert("Fine adjustment", boost::bind(&AddRobotBase::processFeedback, this, _1)),
         interactive_markers::MenuHandler::UNCHECKED);
 
-
   mark_ = new CreateMarker(group_name_);
   robot_markers_ = mark_->getDefaultMarkers();
-
 
   tf::Vector3 vec(-1, 0, 0);
   tf::Quaternion quat(0, 0, 0, 1);
@@ -76,7 +74,7 @@ void AddRobotBase::init()
   trns.setRotation(quat);
 
   box_pos = trns;
-  target_frame_.assign("map");
+  target_frame_.assign("world");
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
   makeInteractiveMarker();
   server->applyChanges();
@@ -235,10 +233,33 @@ visualization_msgs::InteractiveMarkerControl& AddRobotBase::makeArrowControlDeta
     control_view_details.orientation.y = q_x.y();
     control_view_details.orientation.z = q_x.z();
     control_view_details.orientation.w = q_x.w();
-
+    
+   // control_view_details.name = "rotate_x";
+   // control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+    //msg.controls.push_back(control_view_details);
+    
     control_view_details.name = "move_x";
     control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
     msg.controls.push_back(control_view_details);
+    //*****************************************************************
+
+    //*************rotate and move around the y-axis********************
+    tf::Quaternion q_y(0, 0, 1,1); // (x, y, z,w)
+    q_y.normalize();
+    control_view_details.orientation.x = q_y.x();
+    control_view_details.orientation.y = q_y.y();
+    control_view_details.orientation.z = q_y.z();
+    control_view_details.orientation.w = q_y.w();
+
+   // control_view_details.name = "rotate_y";
+   // control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+    //msg.controls.push_back(control_view_details);
+
+    control_view_details.name = "move_y";
+    control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+    msg.controls.push_back(control_view_details);
+    
+    
     //*****************************************************************
 
     //*************rotate and move around the z-axis********************
@@ -252,20 +273,11 @@ visualization_msgs::InteractiveMarkerControl& AddRobotBase::makeArrowControlDeta
     control_view_details.name = "rotate_z";
     control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
     msg.controls.push_back(control_view_details);
-
-    //*****************************************************************
-
-    //*************rotate and move around the y-axis********************
-    tf::Quaternion q_y(0, 0, 1,1); // (x, y, z,w)
-    q_y.normalize();
-    control_view_details.orientation.x = q_y.x();
-    control_view_details.orientation.y = q_y.y();
-    control_view_details.orientation.z = q_y.z();
-    control_view_details.orientation.w = q_y.w();
-
-    control_view_details.name = "move_y";
-    control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
-    msg.controls.push_back(control_view_details);
+    
+    //control_view_details.name = "move_z";
+    //control_view_details.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+    //msg.controls.push_back(control_view_details);
+  
     control_view_details.markers.push_back(makeWayPoint(msg));
 
     visualization_msgs::MarkerArray control_view_markers = makeRobotMarker(msg, true);
@@ -328,6 +340,7 @@ void AddRobotBase::makeArrow(const tf::Transform& point_pos, int count_arrow)  /
   ROS_DEBUG_STREAM("Markers has frame id: " << int_marker.header.frame_id);
   int_marker.scale = INTERACTIVE_MARKER_SCALE;
   tf::poseTFToMsg(point_pos, int_marker.pose);
+
   std::vector< tf::Transform >::iterator it_pos =
       std::find((waypoints_pos.begin()), (waypoints_pos.end() - 1), point_pos);
 
@@ -401,9 +414,9 @@ visualization_msgs::InteractiveMarkerControl& AddRobotBase::makeInteractiveMarke
   control_button.name = "button_interaction";
   control_button.markers.push_back(makeInterArrow(msg));
   visualization_msgs::MarkerArray control_button_markers = makeRobotMarker(msg, false);
-  for(int i=0;i<control_button_markers.markers.size();++i)
+  for(int i=0;i<control_button_markers.markers.size();++i){
     control_button.markers.push_back(control_button_markers.markers[i]);
-
+  }
   msg.controls.push_back(control_button);
   visualization_msgs::InteractiveMarkerControl control_inter_arrow;
   control_inter_arrow.always_visible = true;
@@ -416,18 +429,26 @@ visualization_msgs::InteractiveMarkerControl& AddRobotBase::makeInteractiveMarke
   control_inter_arrow.orientation.z = q_x.z();
   control_inter_arrow.orientation.w = q_x.w();
 
+  //control_inter_arrow.name = "rotate_x";
+  //control_inter_arrow.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  //msg.controls.push_back(control_inter_arrow);
+
   control_inter_arrow.name = "move_x";
   control_inter_arrow.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
   msg.controls.push_back(control_inter_arrow);
   //*****************************************************************
 
   //*************rotate and move around the y-axis********************
-  tf::Quaternion q_z(0, 1, 0,1); // (x, y, z,w) 
-  q_z.normalize();
-  control_inter_arrow.orientation.x = q_z.x();
-  control_inter_arrow.orientation.y = q_z.y();
-  control_inter_arrow.orientation.z = q_z.z();
-  control_inter_arrow.orientation.w = q_z.w();
+  tf::Quaternion q_y(0, 0, 1,1); // (x, y, z,w) 
+  q_y.normalize();
+  control_inter_arrow.orientation.x = q_y.x();
+  control_inter_arrow.orientation.y = q_y.y();
+  control_inter_arrow.orientation.z = q_y.z();
+  control_inter_arrow.orientation.w = q_y.w();
+
+  //control_inter_arrow.name = "rotate_y";
+  //control_inter_arrow.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  //msg.controls.push_back(control_inter_arrow);
 
   control_inter_arrow.name = "move_y";
   control_inter_arrow.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
@@ -436,16 +457,21 @@ visualization_msgs::InteractiveMarkerControl& AddRobotBase::makeInteractiveMarke
 
 
   //*************rotate and move around the z-axis********************
-  tf::Quaternion q_y(0, 0, 1,1); // (x, y, z,w)
-  q_y.normalize();
-  control_inter_arrow.orientation.x = q_y.x();
-  control_inter_arrow.orientation.y = q_y.y();
-  control_inter_arrow.orientation.z = q_y.z();
-  control_inter_arrow.orientation.w = q_y.w();
+  tf::Quaternion q_z(0, 1, 0,1); // (x, y, z,w)
+  q_z.normalize();
+  control_inter_arrow.orientation.x = q_z.x();
+  control_inter_arrow.orientation.y = q_z.y();
+  control_inter_arrow.orientation.z = q_z.z();
+  control_inter_arrow.orientation.w = q_z.w();
   
   control_inter_arrow.name = "rotate_z";
   control_inter_arrow.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
   msg.controls.push_back(control_inter_arrow);
+  
+  //control_inter_arrow.name = "move_z";
+  //control_inter_arrow.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  //msg.controls.push_back(control_inter_arrow);
+  
   //*****************************************************************
 
   control_inter_arrow.markers.push_back(makeInterArrow(msg));
@@ -516,7 +542,7 @@ void AddRobotBase::clearAllPointsRviz()
 
 void AddRobotBase::getRobotModelFrame_slot(const tf::Transform end_effector)
 {
-  target_frame_.assign("map");
+  target_frame_.assign("world");
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
   box_pos = end_effector;
   clearAllPointsRviz();

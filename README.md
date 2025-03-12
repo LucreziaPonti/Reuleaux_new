@@ -33,7 +33,7 @@ The other packages used in this thesis work are:
     sudo apt install ros-noetic-navigation
     ```
 - Create a workspace and clone the repository in the src folder 
-- ROBOT INFORMATION: for this package to work you will need (*atleast*) the *robot*_moveit_config package in order to have the robot description and the kinematic solver available through MoveIt! - for a better use is of course recommended to have the full packages to simulate the robot. 
+- ROBOT INFORMATION: for this package to work you will need a robot description packages, most important package is the *robot*_moveit_config package in order to have the robot description and the kinematic solver available through MoveIt! 
 - ** *at the moment* ** ROBOT SETUP: in map_creator>include>map_creator add the *robot*_ikfast_solver.cpp and add "#include *robot*_ikfast_solver.cpp" in the kinematics.h file 
 
 
