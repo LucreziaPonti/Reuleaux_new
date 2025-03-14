@@ -8,9 +8,11 @@ The previous repo contains along with the Reuleaux package the other packages us
 This repository only contains the reuleaux package. 
 The other packages used in this thesis work are:
 
-*** TIAGO
+- TIAGO robot: https://github.com/LucreziaPonti/TiagoForReuleaux.git - my repository containing all the pkgs for the tiago robot + some minor changes (!! make sure to look into the README file for additional installation steps, after having installed Reuleaux)
 
-*** PANDA
+- PANDA robot: https://github.com/LucreziaPonti/PandaForReuleaux - my repository containing panda_moveit_config (+ installed the packages for the robot description)
+
+*** RML63-B : https://github.com/LucreziaPonti/RM63BforReuleaux - my repository containing the robot description and the moveit_config package (created with the Moveit Setup Assistant)
 
 *** grasp (?)
 
