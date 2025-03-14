@@ -486,8 +486,18 @@ visualization_msgs::MarkerArray AddRobotBase::makeRobotMarker(visualization_msgs
   visualization_msgs::MarkerArray robot_markers_new = robot_markers_;
   for(int i=0;i<robot_markers_.markers.size();++i)
   {
-    robot_markers_new.markers[i].type = visualization_msgs::Marker::MESH_RESOURCE;
-    robot_markers_new.markers[i].mesh_use_embedded_materials = true;
+    robot_markers_new.markers[i].type = robot_markers_new.markers[i].type;
+    if(robot_markers_new.markers[i].type == visualization_msgs::Marker::MESH_RESOURCE){
+      robot_markers_new.markers[i].mesh_use_embedded_materials = true;
+    }
+    
+    if (robot_markers_new.markers[i].type == visualization_msgs::Marker::POINTS || 
+      robot_markers_new.markers[i].type == visualization_msgs::Marker::LINE_STRIP || 
+      robot_markers_new.markers[i].type == visualization_msgs::Marker::LINE_LIST) {
+
+      robot_markers_new.markers[i].points = robot_markers_new.markers[i].points;
+      robot_markers_new.markers[i].colors = robot_markers_new.markers[i].colors;
+    }
     if(waypoint)
       robot_markers_new.markers[i].color = ROBOT_WAY_POINT_COLOR;
     else

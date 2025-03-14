@@ -107,8 +107,19 @@ void CreateMarker::updateMarkers(const geometry_msgs::Pose& base_pose, bool is_r
   for(std::size_t j=0;j<markers.markers.size();j++)
   {
     markers.markers[j].header.frame_id = "world";
-    markers.markers[j].type = visualization_msgs::Marker::MESH_RESOURCE;
-    markers.markers[j].mesh_use_embedded_materials = true;
+    markers.markers[j].type = markers.markers[j].type;
+    if(markers.markers[j].type == visualization_msgs::Marker::MESH_RESOURCE){
+      markers.markers[j].mesh_use_embedded_materials = true;
+    }
+    
+    if (markers.markers[j].type == visualization_msgs::Marker::POINTS || 
+      markers.markers[j].type == visualization_msgs::Marker::LINE_STRIP || 
+      markers.markers[j].type == visualization_msgs::Marker::LINE_LIST) {
+
+      markers.markers[j].points = markers.markers[j].points;
+      markers.markers[j].colors = markers.markers[j].colors;
+    }
+    
     markers.markers[j].id = j*5;
     markers.markers[j].header.stamp = ros::Time::now();
     markers.markers[j].ns = "robot_links";
@@ -133,6 +144,7 @@ void CreateMarker::updateMarkers(const geometry_msgs::Pose& base_pose, bool is_r
     geometry_msgs::Pose new_marker_pose;
     tf::poseEigenToMsg(base_tf * tf_link_in_root, new_marker_pose);
     markers.markers[j].pose = new_marker_pose;
+  
   }
 }
 
