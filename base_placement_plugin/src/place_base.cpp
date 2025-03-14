@@ -921,8 +921,8 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
     marker.scale.z = 0.03;
 
     marker.color.r = 0.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 0.0f;
+    marker.color.g = 0.0f;
+    marker.color.b = 1.0f;
     marker.color.a = 1.0;
     marker.id = i;
 

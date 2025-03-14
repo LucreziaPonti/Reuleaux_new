@@ -7,7 +7,7 @@
 
 
     <!--Fixed frame for the plugin-->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="BPPtoROBOT_fixed_frame" args="0 0 0 0 0 0 bpp_fixed_frame $(arg robot_fixed_frame)" if="$(arg adjust_frame)"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="BPPtoROBOT_fixed_frame" args="0 0 0 0 0 0 world $(arg robot_fixed_frame)" if="$(arg adjust_frame)"/>
 
 
     <!--Running RVIZ for base_placement-->

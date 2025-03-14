@@ -3,11 +3,13 @@
 
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
     <arg name = "robot_fixed_frame" default="world"/>
-    <arg name="adjust_frame" default="true"/>
+    <arg name="adjust_frame" default="false"/>
 
     <arg name="bp_results" default="false"/>
 
-    <include file="$(find panda_moveit_config)/launch/demo.launch"> <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
+    <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
+    <!--ROBOTS USED: rm_63_b_moveit_config  -  tiago_moveit_config   -  panda_moveit_config-->
+    <include file="$(find rm_63_b_moveit_config)/launch/demo.launch"> 
         <arg name="use_rviz" value="false"/>  
     </include>
 
