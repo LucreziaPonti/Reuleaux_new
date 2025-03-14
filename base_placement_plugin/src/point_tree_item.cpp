@@ -1,4 +1,4 @@
-//#include <QStringList>
+#include <QStringList>
 
 #include <base_placement_plugin/point_tree_item.h>
 

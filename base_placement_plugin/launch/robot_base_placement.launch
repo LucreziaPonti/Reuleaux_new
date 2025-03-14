@@ -2,7 +2,7 @@
     <launch>
 
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
-    <arg name = "robot_fixed_frame" default="world"/>
+    <arg name = "robot_fixed_frame" default="base_footprint"/>
     <arg name="adjust_frame" default="false"/>
 
     <arg name="bp_results" default="false"/>
@@ -20,9 +20,7 @@
         <arg name="robot_fixed_frame" value="$(arg robot_fixed_frame)"/>
     </include>
 
-    <!--TIAGo specific requirements - delete or comment out if not needed>
-    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom" />
-    <node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_base_footprint" args="0 0 0 0 0 0 odom base_footprint" /-->
+
 
 
 </launch>

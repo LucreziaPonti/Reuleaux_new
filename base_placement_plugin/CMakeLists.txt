@@ -23,6 +23,16 @@ find_package(catkin REQUIRED COMPONENTS
   reule_aux
 )
 
+if(rviz_QT_VERSION VERSION_LESS "5")
+  find_package(Qt4 ${rviz_QT_VERSION} REQUIRED QtCore QtGui)
+  include(${QT_USE_FILE})
+  set(QT_LIBRARIES )
+else()
+  find_package(Qt5 ${rviz_QT_VERSION} REQUIRED COMPONENTS Core Widgets Concurrent)
+  set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::Concurrent)
+endif()
+# Instruct CMake to run moc automatically when needed.
+set(CMAKE_AUTOMOC ON)
 find_package(HDF5 REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -66,7 +76,7 @@ set(base_placement_plugin_INCLUDE_DIRECTORIES
 
 catkin_package(
   INCLUDE_DIRS ${base_placement_plugin_INCLUDE_DIRECTORIES}
-  LIBRARIES ${PROJECT_NAME} 
+  LIBRARIES ${PROJECT_NAME} create_marker
   CATKIN_DEPENDS
   interactive_markers
   pluginlib
@@ -77,18 +87,11 @@ catkin_package(
   visualization_msgs
   map_creator
   reule_aux
+  moveit_core
+  moveit_ros_planning_interface
 )
 
-if(rviz_QT_VERSION VERSION_LESS "5")
-  find_package(Qt4 ${rviz_QT_VERSION} REQUIRED QtCore QtGui)
-  include(${QT_USE_FILE})
-  set(QT_LIBRARIES )
-else()
-  find_package(Qt5 ${rviz_QT_VERSION} REQUIRED COMPONENTS Core Widgets Concurrent)
-  set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::Concurrent)
-endif()
-# Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
+
 if(rviz_QT_VERSION VERSION_LESS "5")
   qt4_wrap_cpp(base_placement_plugin_MOCS ${base_placement_plugin_HDRS} )
   qt4_wrap_ui(base_placement_plugin_UIS_H ${base_placement_plugin_UIS} )
@@ -115,7 +118,7 @@ class_loader_hide_library_symbols(${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
 install(PROGRAMS scripts/base_placement_plugin

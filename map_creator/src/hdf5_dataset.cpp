@@ -114,12 +114,8 @@ void Hdf5Dataset::close_cap()
 bool Hdf5Dataset::checkPath(std::string path)
 {
   if (stat(path.c_str(), &st)!=0)
-  {
     ROS_INFO("Path does not exist yet");
-    return false;
-  } else {
-    return true;
-  }
+  
 }
 
 void Hdf5Dataset::createPath(std::string path)

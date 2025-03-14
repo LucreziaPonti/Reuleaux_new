@@ -486,7 +486,7 @@ void SphereDiscretization::findOptimalPosebyPCA(const std::vector< geometry_msgs
 
   int i = test.maxCoeff(&idx);
   Eigen::Vector4d vector = eig.eigenvectors().col(idx).real();
-  tf2::Quaternion final_base_quat(vector[0], vector[0], vector[0], vector[0]);
+  tf2::Quaternion final_base_quat(vector[0], vector[1], vector[2], vector[3]);
   final_base_quat.normalize();
 
   final_base_pose.position.x =0;

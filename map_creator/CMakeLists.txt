@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(octomap REQUIRED)
 find_package(HDF5 REQUIRED)
+find_package(MPI REQUIRED)
 
 add_message_files(
  FILES
@@ -50,12 +51,6 @@ catkin_package(
 link_directories(${HDF5_LIBRARY_DIRS})
 include_directories(include ${catkin_INCLUDE_DIRS} ${OCTOMAP_INCLUDE_DIRS} ${HDF5_INCLUDE_DIR} ${PCL_INCLUDE_DIR})
 
-# include (CheckIncludeFile)
-# check_include_file ("hdf5/serial/hdf5.h" HDF5_SERIAL)
-# if (HDF5_SERIAL)
-#   set (HDF5 "hdf5_serial")
-#   include_directories ("/usr/include/hdf5/serial")
-# endif (HDF5_SERIAL)
 
 add_library(sphere_discretization  src/sphere_discretization.cpp)
 add_library(kinematics  src/kinematics.cpp )
@@ -63,7 +58,7 @@ add_library(hdf5_dataset src/hdf5_dataset.cpp )
 
 target_link_libraries(sphere_discretization  ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${PCL_LIBRARY_DIRS})
 target_link_libraries(kinematics  ${catkin_LIBRARIES} -llapack)
-target_link_libraries(hdf5_dataset ${HDF5_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(hdf5_dataset  ${catkin_LIBRARIES} ${HDF5_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 install(TARGETS sphere_discretization kinematics hdf5_dataset
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

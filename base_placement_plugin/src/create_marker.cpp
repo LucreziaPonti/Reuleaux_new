@@ -10,7 +10,7 @@ double unifRand()
 CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(group_name)
 {
   spinner.start();
-  group_.reset(new moveit::planning_interface::MoveGroupInterface(group_name_));
+  group_.reset(new MoveGroupInterface(group_name_));
   //ROS_INFO_STREAM("Selected planning group: "<< group_->getName());
   robot_model_ = group_->getRobotModel();
 }
@@ -44,8 +44,6 @@ bool checkForJointSoln(const std::vector<double>& soln)
 {
   if(std::equal(soln.begin()+1, soln.end(), soln.begin()))
     return true;
-  else
-    return false;
 }
 
 void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, moveit::core::RobotStatePtr robot_state)
@@ -167,7 +165,7 @@ void CreateMarker::createInteractiveMarker(const geometry_msgs::Pose& base_pose,
   iMarker.pose = base_pose;
   iMarker.scale = 0.3;
   std::string name = "robot_model";
-  std::string description = "robot_description"; //perchè non è scritto robot_description?? (robot_desc)
+  std::string description = "robot_descr"; //perchè non è scritto robot_description?? (robot_desc)
   iMarker.name = name + boost::lexical_cast<std::string>(num);
   iMarker.description = description+boost::lexical_cast<std::string>(num);
   visualization_msgs::InteractiveMarkerControl robotModelControl;

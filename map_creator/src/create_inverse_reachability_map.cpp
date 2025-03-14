@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 //struct stat st;
 
 int main(int argc, char **argv)

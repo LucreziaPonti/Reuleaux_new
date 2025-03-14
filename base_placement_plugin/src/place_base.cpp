@@ -105,6 +105,7 @@ void PlaceBase::getSelectedRobotGroup(int group_index)
   //   ROS_ERROR_STREAM("Is your selected group is a manipulator?? ");
   //   delete mark_;
   // }
+  ////questo nella pr e` scommentato
   Q_EMIT sendSelectedGroup_signal(selected_group_);
 }
 
@@ -409,7 +410,6 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
 
 void PlaceBase::transformFromRobotbaseToArmBase(const geometry_msgs::Pose& base_pose, geometry_msgs::Pose &arm_base_pose)
 {
-  //moveit::planning_interface::MoveGroup group(selected_group_);//Creating move group
   ////Get a joint group from this model (by name) - get the joints of the "arm" group
   const moveit::core::JointModelGroup* arm_jmp = robot_model_->getJointModelGroup(selected_group_);
   ////Get the names of the links that are part of this joint group. (arm)
@@ -529,7 +529,7 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
   }else  {
 
     if (PoseColFilter.size() == 0)    {
-      ROS_INFO("No Inverse Reachability Map found. Please provide an Inverse Reachability map.");
+      ROS_WARN("No Inverse Reachability Map found. Please provide an Inverse Reachability map.");
     }    else    {
       sphere_discretization::SphereDiscretization sd;
       baseTrnsCol.clear();
@@ -671,12 +671,12 @@ void PlaceBase::findBaseByVerticalRobotModel()
   ROS_INFO("Finding optimal ROBOT base pose by Vertical robot model.");
   std::vector<geometry_msgs::Pose> base_poses;
   std::vector<geometry_msgs::Pose> base_poses_user;
-  int num_of_desired_sp = HIGH_SCORE_SP_;
+  int num_of_desired_sp = HIGH_SCORE_SP_+50;
   int num_of_sp = highScoreSp.size();
   if(BASE_LOC_SIZE_>num_of_sp)
     ROS_ERROR("Desired base locations are too high (num_of_sp=%d , num_base_loc=%d). Please reduce it",num_of_sp,BASE_LOC_SIZE_);
   //The iteration is taken 4 just to make sure that the robot models are not so close to each other
-  for(int i=0;i<num_of_desired_sp;i+=2)
+  for(int i=0;i<num_of_desired_sp;i+=4)
   {
     geometry_msgs::Pose prob_base_pose;
     prob_base_pose.position.x = highScoreSp[i][0];
