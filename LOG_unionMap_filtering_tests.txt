@@ -1,0 +1,15 @@
+TEST SITUATION:
+- task set = pick_one_each_DEF.yaml 
+- simulation = eut_kitchen from tesi_reuleaux_tiago repo (launch: ***)
+- ROBOT = Tiago
+- IRM = tiago_arm_r0.08_new_frame_Inv_reachability.h5 (map_generation - alreafy filtered for self-collision)
+- Other data: method = IKSolutionScore ; base locations = 5 ; high score spheres = 15 ; 
+!!! done with createSpheres still using the IKFast cpp solver function to recompute the sphere score
+
+TEST: *describe test*
+RESULT: (copy paste output on screen containing: from "//////////////////////// START UNION MAP CREATION ////////////////////////" to "//////////////////////// END UNION MAP CREATION ////////////////////////" )
+COMMENT ON RESULT VALIDITY: 
+
+
+
+
