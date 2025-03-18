@@ -9,7 +9,7 @@
 
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
     <!--ROBOTS USED: rm_63_b_moveit_config  -  tiago_moveit_config   -  panda_moveit_config-->
-    <include file="$(find rm_63_b_moveit_config)/launch/demo.launch"> 
+    <include file="$(find tiago_moveit_config)/launch/demo.launch"> 
         <arg name="use_rviz" value="false"/>  
     </include>
 

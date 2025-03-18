@@ -13,6 +13,17 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
   group_.reset(new MoveGroupInterface(group_name_));
   //ROS_INFO_STREAM("Selected planning group: "<< group_->getName());
   robot_model_ = group_->getRobotModel();
+
+  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor("robot_description"));
+  if(!planning_scene_monitor_->getPlanningScene())
+  {
+    ROS_ERROR("Planning scene not configured");
+    return;
+  }
+    ROS_INFO("Planning scene configured");
+    planning_scene_monitor_->startSceneMonitor();
+    planning_scene_monitor_->startWorldGeometryMonitor();
+    planning_scene_monitor_->startStateMonitor();
 }
 
 bool CreateMarker::checkEndEffector()
@@ -46,14 +57,34 @@ bool checkForJointSoln(const std::vector<double>& soln)
     return true;
 }
 
-void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, moveit::core::RobotStatePtr robot_state)
+void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, moveit::core::RobotStatePtr robot_state, bool arm_only)
 {
-  std::string robot_name = group_->getName();
-  const moveit::core::JointModelGroup* robot_jmp = robot_model_->getJointModelGroup(robot_name);
-  std::vector<std::string> joint_names = robot_jmp->getActiveJointModelNames();
-  for (int i=0;i<joint_soln.size();i++)
-  {
-    robot_state->setJointPositions(joint_names[i], &(joint_soln[i]));
+  if(!arm_only){
+    if(!planning_scene_monitor_){
+      ROS_ERROR("Planning scene not configured");
+      return;
+    }
+    
+    planning_scene_monitor_->getPlanningScene()->getCurrentStateNonConst().update();
+    planning_scene_monitor_->updateFrameTransforms();
+    const moveit::core::RobotState& current_state = planning_scene_monitor_->getPlanningScene()->getCurrentState();
+    ////current_state.printStateInfo(); 
+
+    // Get all joint names
+    const std::vector<std::string>& joint_names = current_state.getVariableNames();
+    for(int i=0;i<joint_names.size();i++){
+      const double* joint_pos = current_state.getJointPositions(joint_names[i]);
+      robot_state->setJointPositions(joint_names[i], joint_pos);
+    }
+  }
+  if(joint_soln.size() != 0){ //is not done if i don't have the joint solutions - in placeBase::TransformToRobotbase, placeBase::TransformFromRobotToArmBase and createMarker::getDefaultMarkers
+    std::string robot_name = group_->getName();
+    const moveit::core::JointModelGroup* robot_jmp = robot_model_->getJointModelGroup(robot_name);
+    std::vector<std::string> joint_names = robot_jmp->getActiveJointModelNames();
+    for (int i=0;i<joint_soln.size();i++)
+    {
+      robot_state->setJointPositions(joint_names[i], &(joint_soln[i]));
+    }
   }
   robot_state->update();
 }
@@ -152,13 +183,12 @@ void CreateMarker::updateMarkers(const geometry_msgs::Pose& base_pose, bool is_r
 void CreateMarker::makeIntMarkerControl(const geometry_msgs::Pose& base_pose, const std::vector<double>& joint_soln,bool arm_only, bool is_reachable, visualization_msgs::InteractiveMarkerControl& robotModelControl)
 {
   moveit::core::RobotStatePtr robot_state(new moveit::core::RobotState(robot_model_));
-  updateRobotState(joint_soln, robot_state);
+  updateRobotState(joint_soln, robot_state, arm_only);
   std::vector<std::string> full_link_names;
   getFullLinkNames(full_link_names, arm_only);
   visualization_msgs::MarkerArray full_link_markers;
   robot_state->getRobotMarkers(full_link_markers, full_link_names);
 
-  //const std::string& parent_link = full_link_names[0]; //root link
   Eigen::Affine3d tf_root_to_first_link = robot_state->getGlobalLinkTransform(parent_link);
   Eigen::Affine3d tf_first_link_to_root = tf_root_to_first_link.inverse();
 
@@ -222,7 +252,8 @@ bool CreateMarker::makeArmMarker(BasePoseJoint baseJoints, std::vector<visualiza
 visualization_msgs::MarkerArray CreateMarker::getDefaultMarkers()
 {
   moveit::core::RobotStatePtr robot_state(new moveit::core::RobotState(robot_model_));
-  //updateRobotState(joint_soln, robot_state);
+  std::vector<double> joint_soln_empty;
+  updateRobotState(joint_soln_empty, robot_state, false);
   std::vector<std::string> full_link_names;
   getFullLinkNames(full_link_names, false);
   visualization_msgs::MarkerArray full_link_markers;

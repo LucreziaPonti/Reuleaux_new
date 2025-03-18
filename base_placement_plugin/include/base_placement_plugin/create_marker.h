@@ -20,6 +20,11 @@
 #include<moveit/robot_model/joint_model_group.h>
 #include<moveit/robot_model/link_model.h>
 
+
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+
+
+
 #if ROS_VERSION_MINIMUM(1,12,0)
     #include <moveit/move_group_interface/move_group_interface.h>
     typedef moveit::planning_interface::MoveGroupInterface MoveGroupInterface;
@@ -38,17 +43,17 @@ public:
   bool makeArmMarker(BasePoseJoint baseJoints,  std::vector<visualization_msgs::InteractiveMarker>& iMarkers, bool show_unreachable_models); //visualizing robot model with joint solutions
   bool makeRobotMarker(BasePoseJoint baseJoints,  std::vector<visualization_msgs::InteractiveMarker>& iMarkers, bool show_unreachable_models); //visualizing robot model with joint solutions
   bool checkEndEffector();
+  void updateRobotState(const std::vector<double>& joint_soln, moveit::core::RobotStatePtr robot_state, bool arm_only);
 
   visualization_msgs::MarkerArray getDefaultMarkers();
 
-
-
+protected: 
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 
 private:
 
   void discardUnreachableModels(BasePoseJoint& baseJoints);
   void makeIntMarkers(BasePoseJoint& basePJoints, bool arm_only, std::vector<visualization_msgs::InteractiveMarker> &iMarkers);
-  void updateRobotState(const std::vector<double>& joint_soln, moveit::core::RobotStatePtr robot_state);
   void getFullLinkNames(std::vector<std::string>& full_link_names, bool arm_only);
   void getArmLinks(std::vector<std::string>& arm_links);
   void getEELinks(std::vector<std::string>& ee_links);

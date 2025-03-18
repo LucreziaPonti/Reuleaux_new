@@ -414,8 +414,10 @@ void PlaceBase::transformFromRobotbaseToArmBase(const geometry_msgs::Pose& base_
   const moveit::core::JointModelGroup* arm_jmp = robot_model_->getJointModelGroup(selected_group_);
   ////Get the names of the links that are part of this joint group. (arm)
   const std::vector<std::string>& arm_link_names = arm_jmp->getLinkModelNames();
-  ////i think this gets the configuration the model is in, to then use to compute the transforms
+  ////get the configuration the model is in, to then use to compute the transforms
   moveit::core::RobotStatePtr robot_state_(new moveit::core::RobotState(robot_model_));
+  std::vector<double> joint_soln_empty;
+  mark_->updateRobotState(joint_soln_empty, robot_state_, false);
   ////Get the link names (of all links)
   std::vector<std::string> full_link_names = robot_model_->getLinkModelNames();
   ////find the index of the first link of the arm inside the entire list of link names (for tiago - arm_1_link)
@@ -441,21 +443,26 @@ void PlaceBase::transformToRobotbase(std::multimap< std::vector< double >, std::
   const std::vector<std::string>& arm_link_names = robot_jmp->getLinkModelNames();
   ////robot state/configuration(?)
   moveit::core::RobotStatePtr robot_state_(new moveit::core::RobotState(robot_model_));
+  std::vector<double> joint_soln_empty;
+  mark_->updateRobotState(joint_soln_empty, robot_state_, false);
+  ////robot_state_->printStateInfo(); 
   ////transform from global frame to "root link" of the entire robot (for tiago - base_footprint)
   const Eigen::Affine3d trans_to_root = robot_state_->getGlobalLinkTransform(robot_model_->getRootLinkName()); ////not used ever  //world T root
   ////tranform from global frame to first link of arm (for tiago - arm_1_link)
   const Eigen::Affine3d trans_to_arm = robot_state_->getGlobalLinkTransform(arm_link_names[0]); // world T arm
 
-  const Eigen::Vector3d v_arm = trans_to_arm.translation();
-  ROS_DEBUG("global transform arm_1_link: %f %f %f",v_arm[0],v_arm[1],v_arm[2]);
-  const Eigen::Vector3d v_root = trans_to_root.translation();
-  ROS_DEBUG("global transform root (b_f): %f %f %f",v_root[0],v_root[1],v_root[2]);
+  geometry_msgs::Pose arm_pose;
+  tf::poseEigenToMsg(trans_to_arm, arm_pose);
+  ROS_INFO("TRANSFORMTOROBOTBASE - global transform arm_1_link: %f %f %f %f %f %f %f",arm_pose.position.x,arm_pose.position.y,arm_pose.position.z,arm_pose.orientation.x,arm_pose.orientation.y,arm_pose.orientation.z,arm_pose.orientation.w);
+  geometry_msgs::Pose root_pose;
+  tf::poseEigenToMsg(trans_to_root, root_pose);
+  ROS_INFO("TRANSFORMTOROBOTBASE - global transform root: %f %f %f %f %f %f %f",root_pose.position.x,root_pose.position.y,root_pose.position.z,root_pose.orientation.x,root_pose.orientation.y,root_pose.orientation.z,root_pose.orientation.w);
 
   ////inverse - !!!! we need that root and global frames correspond
   const Eigen::Affine3d arm_to_root = trans_to_arm.inverse()*trans_to_root; // arm T root = arm T world * world T root
   ////maybe here we should use trans_to_root if we don't want this correspondence 
   const Eigen::Vector3d v_arm_inv = arm_to_root.translation();
-  ROS_DEBUG("inverse transform arm_1_link: %f %f %f",v_arm_inv[0],v_arm_inv[1],v_arm_inv[2]);
+  ROS_INFO("TRANSFORMTOROBOTBASE - inverse transform arm_1_link: %f %f %f",v_arm_inv[0],v_arm_inv[1],v_arm_inv[2]);
 
   sphere_discretization::SphereDiscretization sd;
   ////for all the possible armbaseposes computed  (globally??)

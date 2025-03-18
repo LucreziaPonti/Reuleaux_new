@@ -20,6 +20,9 @@ The other packages used in this thesis work are:
 ## Differences from the original REPO
 *da aggiungere una volta concluso il lavoro - vedi note per idee*
 
+- updated function **createMarker::updateRobotState** to update the full robot (using the planning scene monitor) and not only the manipulator group (additional arg *arm_only* allows to choose to only update the manipulator 
+    !! must be used when there is a valid *joint_soln* because if not there will not be any values to update with) - added to the functions *CreateMarker::getDefaultMarkers* (used by *add_robot_base* - the UserIntuition method - to create the robot interactive button), *PlaceBase::transformToRobotbase* (used to create the robot_base IRM for VerticalRobotModel metod) and *PlaceBase::transformFromRobotbaseToArmBase* 
+
 ## Setup
 - ROS Noetic INSTALLATION: https://wiki.ros.org/noetic/Installation/Ubuntu
 - Install OTHER IMPORTANT PKGs : 
