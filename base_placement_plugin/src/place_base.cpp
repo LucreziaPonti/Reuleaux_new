@@ -7,7 +7,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <base_placement_plugin/place_base.h>
-#include <base_placement_plugin/filter_collision_poses.h>
+//////#include <base_placement_plugin/filter_collision_poses.h>
 
 #include <octomap/octomap.h>
 #include <octomap/MapCollection.h>
@@ -229,10 +229,10 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
         prob_base_pose.position.z = (it->first)[2];
         prob_base_pose.orientation.w = 1.0;
         
-        ////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE
-        FilterCollisionPoses filter;
-        if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, false)){ 
-          //true = NOT IN COLLISION with any collision object of the planning scene -- acceptable base pos
+        ////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE *****REMOVE****
+        //////FilterCollisionPoses filter;
+        ///////if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, false)){ 
+          ///////true = NOT IN COLLISION with any collision object of the planning scene -- acceptable base pos
           geometry_msgs::Pose base_pose_at_arm;
           transformFromRobotbaseToArmBase(prob_base_pose, base_pose_at_arm);
           int num_of_solns = 0;
@@ -243,11 +243,11 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
             k.isIkSuccesswithTransformedBase(base_pose_at_arm, GRASP_POSES_[j], joint_soln, nsolns);
             num_of_solns +=nsolns;
           }
-          ////recomputes the reachability score of the spheres
+          //recomputes the reachability score of the spheres
           float d = (float(num_of_solns)/float(GRASP_POSES_.size()*8))*100;
           spColor.insert(std::pair< std::vector< double >, double >(it->first, double(d)));
           //// stores it in the union map associating score and pose
-        }
+        ///////}
       }
      }
   }
@@ -259,15 +259,15 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
       prob_base_pose.position.x = (it->first)[0];
       prob_base_pose.position.y = (it->first)[1];
       prob_base_pose.position.z = (it->first)[2];
-      ///FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE AND SATISFY ROBOT CONSTRAINTS (for tiago=torso's height)
-      FilterCollisionPoses filter;
-      if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, true)){ 
+      ////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE AND SATISFY ROBOT CONSTRAINTS (for tiago=torso's height)
+      ////////FilterCollisionPoses filter;
+      /////////if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, true)){ 
         //true = NOT IN COLLISION with any collision object of the planning scene -- acceptable base pos
         float d = ((float(basePoses.count(it->first))- min_number)/ (max_number - min_number)) * 100; //PLACE_BASE index
         if(d>1){
           spColor.insert(std::pair< std::vector< double >, double >(it->first, double(d)));
         }
-      }
+      ///////}
     }
   }
 
