@@ -555,17 +555,17 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
         createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
       }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
         ROS_INFO("//////////////////////// START UNION MAP CREATION ////////////////////////");
-        std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now(); //////////////
+        /*////////////*/std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now(); 
         sd.associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res);
-        std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); //////////////
-        std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); //////////////
-        ROS_INFO("Time for AssociatePose: %ld ms", AP.count());  //////////////
+        /*////////////*/std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); 
+        /*////////////*/std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); 
+        /*////////////*/ROS_INFO("Time for AssociatePose: %ld ms", AP.count());  
         ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
-        std::chrono::high_resolution_clock::time_point start_CS = std::chrono::high_resolution_clock::now(); //////////////
+        /*////////////*/std::chrono::high_resolution_clock::time_point start_CS = std::chrono::high_resolution_clock::now(); 
         createSpheres(baseTrnsCol, sphereColor, highScoreSp, false);
-        std::chrono::high_resolution_clock::time_point finish_CS = std::chrono::high_resolution_clock::now(); //////////////
-        std::chrono::milliseconds CS = std::chrono::duration_cast<std::chrono::milliseconds>(finish_CS - start_CS); //////////////
-        ROS_INFO("Time for CreateSpheres: %ld ms", CS.count()); //////////////
+        /*////////////*/std::chrono::high_resolution_clock::time_point finish_CS = std::chrono::high_resolution_clock::now(); 
+        /*////////////*/std::chrono::milliseconds CS = std::chrono::duration_cast<std::chrono::milliseconds>(finish_CS - start_CS); 
+        /*////////////*/ROS_INFO("Time for CreateSpheres: %ld ms", CS.count()); 
       }
 
       ROS_INFO("Union map has been created. Can now visualize Union Map.");
