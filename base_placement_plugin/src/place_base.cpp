@@ -554,14 +554,25 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
         ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
         createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
       }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
+        ROS_INFO("//////////////////////// START UNION MAP CREATION ////////////////////////");
+        std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now(); //////////////
         sd.associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res);
+        std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); //////////////
+        std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); //////////////
+        ROS_INFO("Time for AssociatePose: %ld ms", AP.count());  //////////////
         ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
+        std::chrono::high_resolution_clock::time_point start_CS = std::chrono::high_resolution_clock::now(); //////////////
         createSpheres(baseTrnsCol, sphereColor, highScoreSp, false);
+        std::chrono::high_resolution_clock::time_point finish_CS = std::chrono::high_resolution_clock::now(); //////////////
+        std::chrono::milliseconds CS = std::chrono::duration_cast<std::chrono::milliseconds>(finish_CS - start_CS); //////////////
+        ROS_INFO("Time for CreateSpheres: %ld ms", CS.count()); //////////////
       }
 
       ROS_INFO("Union map has been created. Can now visualize Union Map.");
       ROS_INFO("Poses in Union Map: %lu", baseTrnsCol.size());
       ROS_INFO("Spheres in Union Map: %lu", sphereColor.size());
+      ROS_INFO("//////////////////////// END UNION MAP CREATION ////////////////////////");
+
 
       ROS_INFO("Start of computation of the base placement");
       BasePlaceMethodHandler(); // depending on the method the poses are found (and stored in final_base_poses) and they are published on reule_aux/bp_results
@@ -873,7 +884,7 @@ void PlaceBase::findBaseByIKSolutionScore()
 
 void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
 {
-  /* Visualizing base solutions as arrow. Arrows are now pointing towards Z direction.(for now)
+  /* Visualizing base solutions as arrow. Arrows are now pointing towards Z direction.
   */
   ROS_INFO("Showing Base Locations by Arrow: Arrows are pointing in Z direction");
   std::vector<geometry_msgs::Pose> pose_arr;
@@ -928,11 +939,11 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
     marker.scale.z = 0.03;
 
     marker.color.r = 0.0f;
-    marker.color.g = 0.0f;
+    marker.color.g = 1.0f;
     marker.color.b = 1.0f;
     marker.color.a = 1.0;
     marker.id = i;
-
+  
     marker.pose = pose_arr[i];
     markerArr.markers.push_back(marker);
   }
