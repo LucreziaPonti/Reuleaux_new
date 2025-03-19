@@ -12,7 +12,7 @@ The other packages used in this thesis work are:
 
 - PANDA robot: https://github.com/LucreziaPonti/PandaForReuleaux - my repository containing panda_moveit_config (+ installed the packages for the robot description)
 
-*** RML63-B : https://github.com/LucreziaPonti/RM63BforReuleaux - my repository containing the robot description and the moveit_config package (created with the Moveit Setup Assistant)
+- RML63-B : https://github.com/LucreziaPonti/RM63BforReuleaux - my repository containing the robot description and the moveit_config package (created with the Moveit Setup Assistant)
 
 *** grasp (?)
 
@@ -21,7 +21,8 @@ The other packages used in this thesis work are:
 *da aggiungere una volta concluso il lavoro - vedi note per idee*
 
 - updated function **createMarker::updateRobotState** to update the full robot (using the planning scene monitor) and not only the manipulator group (additional arg *arm_only* allows to choose to only update the manipulator 
-    !! must be used when there is a valid *joint_soln* because if not there will not be any values to update with) - added to the functions *CreateMarker::getDefaultMarkers* (used by *add_robot_base* - the UserIntuition method - to create the robot interactive button), *PlaceBase::transformToRobotbase* (used to create the robot_base IRM for VerticalRobotModel metod) and *PlaceBase::transformFromRobotbaseToArmBase* 
+    - added to the functions *CreateMarker::getDefaultMarkers* (used by *add_robot_base* - the UserIntuition method - to create the robot interactive button), *PlaceBase::transformToRobotbase* (used to create the robot_base IRM for VerticalRobotModel metod) and *PlaceBase::transformFromRobotbaseToArmBase* 
+    - **ATTENTION** For this function to work properly make sure that in the SRDF file of your robot, if there is one, the virtual joint is called "virtual_joint" 
 
 ## Setup
 - ROS Noetic INSTALLATION: https://wiki.ros.org/noetic/Installation/Ubuntu
@@ -40,7 +41,6 @@ The other packages used in this thesis work are:
 - Create a workspace and clone the repository in the src folder 
 - ROBOT INFORMATION: for this package to work you will need a robot description packages, most important package is the *robot*_moveit_config package in order to have the robot description and the kinematic solver available through MoveIt! 
 - ** *at the moment* ** ROBOT SETUP: in map_creator>include>map_creator add the *robot*_ikfast_solver.cpp and add "#include *robot*_ikfast_solver.cpp" in the kinematics.h file 
-
 
 
 ## Use

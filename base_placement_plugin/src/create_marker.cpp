@@ -72,11 +72,23 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
 
     // Get all joint names
     const std::vector<std::string>& joint_names = current_state.getVariableNames();
-    for(int i=0;i<joint_names.size();i++){
+    int start;
+    
+    // check for virtual joints that need to be skipped
+    if(joint_names[0] == "virtual_joint/trans_x"){ // floating joint - variables: trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, rot_w 
+      start=7;
+    }else if (joint_names[0] == "virtual_joint/x"){ // planar joint - variables: x, y, theta
+      start=3;
+    }else{ // no virtual joint or fixed (no variables)
+      start=0;
+    }
+    
+    for(int i=start;i<joint_names.size();i++){
       const double* joint_pos = current_state.getJointPositions(joint_names[i]);
       robot_state->setJointPositions(joint_names[i], joint_pos);
     }
   }
+
   if(joint_soln.size() != 0){ //is not done if i don't have the joint solutions - in placeBase::TransformToRobotbase, placeBase::TransformFromRobotToArmBase and createMarker::getDefaultMarkers
     std::string robot_name = group_->getName();
     const moveit::core::JointModelGroup* robot_jmp = robot_model_->getJointModelGroup(robot_name);
