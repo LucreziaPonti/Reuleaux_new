@@ -34,7 +34,7 @@ AddWayPoint::AddWayPoint(QWidget* parent) : rviz::Panel(parent)  //, tf_()
   ARROW_INTER_SCALE_CONTROL.z = 0.03;
 
   ARROW_INTERACTIVE_SCALE = 0.3;
-
+  
   ROS_INFO("Constructor created;");
 }
 
@@ -51,6 +51,17 @@ void AddWayPoint::onInitialize()
        Make all the necessary connections for the QObject communications.
        Inter Object connections for communications between the classes.
    */
+  ros::NodeHandle nh;
+  std::string BPP_fixed_frame;
+  while(BPP_fixed_frame.empty()){
+    ROS_INFO("Attempting to get param 'BPP_fixed_frame'");
+    if (nh.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
+        ROS_INFO("Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
+        target_frame_.assign(BPP_fixed_frame);
+    } else {
+        ROS_WARN("Failed to get param 'param_name'");
+    }
+  }
 
   place_base = new PlaceBase();
 
@@ -744,7 +755,8 @@ void AddWayPoint::getRobotModelFrame_slot(const tf::Transform end_effector)
      the RQT Widget.
   */
 
-  target_frame_.assign("world");
+  //target_frame_.assign("odom"); // assigned at initializing
+
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
 
   box_pos = end_effector;

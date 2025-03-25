@@ -40,6 +40,17 @@ PlaceBase::~PlaceBase()
 
 void PlaceBase::init()
 {
+  ros::NodeHandle nh;
+  std::string BPP_fixed_frame;
+  while(BPP_fixed_frame.empty()){
+    ROS_DEBUG("PB - Attempting to get param 'BPP_fixed_frame'");
+    if (nh.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
+        ROS_DEBUG("PB - Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
+        fixed_frame_.assign(BPP_fixed_frame);
+    } else {
+        ROS_WARN("PB - Failed to get param 'param_name'");
+    }
+  }
   //show_ureach_models_ = false;
 }
 
@@ -202,7 +213,7 @@ void PlaceBase::setBasePlaceParams(int base_loc_size, int high_score_sp)
 void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses, /*baseTrnsCol*/
                    std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp, bool reduce_D)
 {
-  ros::NodeHandle nn;
+//  ros::NodeHandle nn;
   kinematics::Kinematics k;
   std::vector<int> poseCount;
   ROS_INFO("begin creating UNION MAP -- may take some time because of collision checking");
@@ -928,7 +939,8 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
   for (int i = 0; i < po.size(); ++i)
   {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "world";
+    //marker.header.frame_id = "odom";
+    marker.header.frame_id = fixed_frame_;
     marker.header.stamp = ros::Time::now();
     marker.ns = "points";
     marker.action = visualization_msgs::Marker::ADD;
@@ -1053,7 +1065,8 @@ void PlaceBase::ShowUnionMap(bool show_map)
     ros::Publisher workspace_pub = n.advertise< map_creator::WorkSpace >("reachability_map", 1);
     map_creator::WorkSpace ws;
     ws.header.stamp = ros::Time::now();
-    ws.header.frame_id = "world";
+    //ws.header.frame_id = "odom";
+    ws.header.frame_id = fixed_frame_;
     ws.resolution = res;
     ROS_DEBUG(" loading spheres");
     for (std::multimap< std::vector< double >, double >::iterator it = sphereColor.begin(); it != sphereColor.end(); ++it)

@@ -56,6 +56,9 @@ public:
   //! Initialization of the necessary parameters.
   void init();
 
+private:
+  std::string fixed_frame_;
+
 public Q_SLOTS:
   //!Getting the reachability data from widget
   void setReachabilityData(std::multimap< std::vector< double >, std::vector< double > > PoseCollection,
@@ -102,7 +105,6 @@ public Q_SLOTS:
 
   //!Getting the user Defined base poses
   void  getBasePoses(std::vector<geometry_msgs::Pose> base_poses);
-
 
 
 Q_SIGNALS:

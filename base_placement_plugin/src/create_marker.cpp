@@ -30,6 +30,18 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
     planning_scene_monitor_->startSceneMonitor();
     planning_scene_monitor_->startWorldGeometryMonitor();
     planning_scene_monitor_->startStateMonitor();
+*/
+  
+  std::string BPP_fixed_frame;
+  while(BPP_fixed_frame.empty()){
+    ROS_DEBUG("CM - Attempting to get param 'BPP_fixed_frame'");
+    if (nh.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
+        ROS_DEBUG("CM - Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
+        fixed_frame_.assign(BPP_fixed_frame);
+    } else {
+        ROS_WARN("CM - Failed to get param 'param_name'");
+    }
+  }
 }
 
 bool CreateMarker::checkEndEffector()
@@ -77,19 +89,19 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
       ROS_ERROR("Planning scene not configured");
       return;
     }
-    
+
     planning_scene_monitor_->getPlanningScene()->getCurrentStateNonConst().update();
     planning_scene_monitor_->updateFrameTransforms();
     const moveit::core::RobotState& current_state = planning_scene_monitor_->getPlanningScene()->getCurrentState();
     current_state.printStateInfo(); 
-
+    
     // Get all joint names
     const std::vector<std::string>& joint_names = current_state.getVariableNames();
     int start=0; // default> no virtual joints or fixed vj 
     
     // check for virtual joints variables that need to be handled differently
     if(joint_names[0] == "virtual_joint/trans_x"){ // floating joint - variables: trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, rot_w 
-      start=7;
+      start=7;      
     }else if (joint_names[0] == "virtual_joint/x"){ // planar joint - variables: x, y, theta
       start=3;
     }
@@ -139,7 +151,7 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
       geometry_msgs::TransformStamped transform_stamped;
       geometry_msgs::Pose root_link_pose;
       try{
-        transform_stamped = tf_buffer.lookupTransform("odom", robot_model_->getRootLinkName(), ros::Time(0), ros::Duration(3.0));
+        transform_stamped = tf_buffer.lookupTransform(fixed_frame_, robot_model_->getRootLinkName(), ros::Time(0), ros::Duration(3.0));
       }catch (tf2::TransformException &ex){
         ROS_WARN("%s", ex.what());
       }
@@ -166,7 +178,7 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
         //ROS_INFO("/////// vj floating %f %f %f %f %f %f %f", vj_pos[0],vj_pos[1],vj_pos[2],vj_pos[3],vj_pos[4],vj_pos[5],vj_pos[6]);/////////////////////
         robot_state->setJointPositions("virtual_joint", vj_pos);
       } // if fixed there is no need to set the joint values of the virtual joint
-    }
+    } 
   }
 
   if(joint_soln.size() != 0){ //is not done if i don't have the joint solutions - in placeBase::TransformToRobotbase, placeBase::TransformFromRobotToArmBase and createMarker::getDefaultMarkers
@@ -229,7 +241,8 @@ void CreateMarker::updateMarkers(const geometry_msgs::Pose& base_pose, bool is_r
   double b = unifRand();
   for(std::size_t j=0;j<markers.markers.size();j++)
   {
-    markers.markers[j].header.frame_id = "world";
+    //markers.markers[j].header.frame_id = "odom";
+    markers.markers[j].header.frame_id = fixed_frame_;
     markers.markers[j].type = markers.markers[j].type;
     if(markers.markers[j].type == visualization_msgs::Marker::MESH_RESOURCE){
       markers.markers[j].mesh_use_embedded_materials = true;
@@ -295,7 +308,8 @@ void CreateMarker::makeIntMarkerControl(const geometry_msgs::Pose& base_pose, co
 void CreateMarker::createInteractiveMarker(const geometry_msgs::Pose& base_pose, const std::vector<double>& joint_soln,
                                            const int& num, bool arm_only, bool is_reachable,visualization_msgs::InteractiveMarker& iMarker)
 {
-  iMarker.header.frame_id = "world";
+  //iMarker.header.frame_id = "odom";
+  iMarker.header.frame_id = fixed_frame_;
   iMarker.pose = base_pose;
   iMarker.scale = 0.3;
   std::string name = "robot_model";

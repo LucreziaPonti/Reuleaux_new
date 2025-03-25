@@ -7,8 +7,7 @@ There are a few different options to use the plugin:
   roslaunch base_placement_plugin base_placement.launch
   ```
   - optional argument **bp_results** : allows to run an additional node (for this work is reuleaux_bp_to_nav) that subscribes to the topic *reule_aux/bp_results* to receive the results and elaborate them as needed - default = *false* 
-  - optional argument **adjust_frame** : when true a new tf is published to "connect" the generalized fixed frame of the plugin (*bpp_fixed_frame*) to the fixed frame of the robot (which needs to be set with the next arg) - default = *false*
-  - optional argument **robot_fixed_frame** : allows to set the fixed frame of the robot - default : *base_link* (may change the default depending on the robot used)
+  - optional argument **fixed_frame** : set the fixed frame for the plugin, it should be the parent of the virtual joint of the robot or the root frame of the robot  - default : *base_link* (may change the default depending on the robot used)
 
 2. The plugin + the robot (with Moveit! demo):
   ```
@@ -16,10 +15,8 @@ There are a few different options to use the plugin:
   ```
   - **ATTENTION**: change in the launch file the name of the  *robot*_moveit_config pkg to use the correct one
   - optional argument **bp_results** : allows to run an additional node (for this work is reuleaux_bp_to_nav) that subscribes to the topic *reule_aux/bp_results* to receive the results and elaborate them as needed - default = *false* 
-  - optional argument **adjust_frame** : when true a new tf is published to "connect" the generalized fixed frame of the plugin (*bpp_fixed_frame*) to the fixed frame of the robot (which needs to be set with the next arg) - default = *false*
-  - optional argument **robot_fixed_frame** : allows to set the fixed frame of the robot - default : *base_link* (may change the default depending on the robot used) 
+  - optional argument **fixed_frame** : set the fixed frame for the plugin, it should be the parent of the virtual joint of the robot or the root frame of the robot - default : *base_link* (may change the default depending on the robot used) 
 
-**ATTENTION** when choosing the fixed frame that you don't have other parent frames to that frame (e.g. when launching with the moveit demo it usually has a "world" frame automatically put as a parent to the base link of the robot - in that case the "frame adjusting" is not needed)
 
 3. Manually setup the Rviz window:
   ```

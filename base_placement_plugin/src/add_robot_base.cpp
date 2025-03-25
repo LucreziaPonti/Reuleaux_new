@@ -74,7 +74,18 @@ void AddRobotBase::init()
   trns.setRotation(quat);
 
   box_pos = trns;
-  target_frame_.assign("world");
+  //target_frame_.assign("odom"); // new generalized assign
+  ros::NodeHandle nh;
+  std::string BPP_fixed_frame;
+  while(BPP_fixed_frame.empty()){
+    ROS_DEBUG("ARB - Attempting to get param 'BPP_fixed_frame'");
+    if (nh.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
+        ROS_DEBUG("ARB - Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
+        target_frame_.assign(BPP_fixed_frame);
+    } else {
+        ROS_WARN("ARB - Failed to get param 'param_name'");
+    }
+  }
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
   makeInteractiveMarker();
   server->applyChanges();
@@ -552,7 +563,7 @@ void AddRobotBase::clearAllPointsRviz()
 
 void AddRobotBase::getRobotModelFrame_slot(const tf::Transform end_effector)
 {
-  target_frame_.assign("world");
+  //target_frame_.assign("odom"); //assigned at init
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
   box_pos = end_effector;
   clearAllPointsRviz();

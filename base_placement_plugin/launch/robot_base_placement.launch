@@ -2,25 +2,20 @@
     <launch>
 
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
-    <arg name = "robot_fixed_frame" default="base_footprint"/>
-    <arg name="adjust_frame" default="false"/>
-
+    <arg name = "fixed_frame" default="odom"/>
     <arg name="bp_results" default="false"/>
 
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
     <!--ROBOTS USED: rm_63_b_moveit_config  -  tiago_moveit_config   -  panda_moveit_config-->
     <include file="$(find tiago_moveit_config)/launch/demo.launch"> 
-        <arg name="use_rviz" value="false"/>  
+        <arg name="use_rviz" value="true"/>  
     </include>
 
     <!--Running RVIZ for base_placement-->
     <include file="$(find base_placement_plugin)/launch/base_placement.launch">
         <arg name="bp_results" value="$(arg bp_results)"/>   
-        <arg name="adjust_frame" value="$(arg adjust_frame)"/>
-        <arg name="robot_fixed_frame" value="$(arg robot_fixed_frame)"/>
+        <arg name="fixed_frame" value="$(arg fixed_frame)"/>
     </include>
-
-
 
 
 </launch>
