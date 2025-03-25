@@ -1,6 +1,7 @@
 #include <base_placement_plugin/create_marker.h>
 #include <ctime>
 #include<typeinfo>
+#include <tf2_ros/transform_listener.h> 
 
 double unifRand()
 {
@@ -14,7 +15,12 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
   //ROS_INFO_STREAM("Selected planning group: "<< group_->getName());
   robot_model_ = group_->getRobotModel();
 
-  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor("robot_description"));
+  // Crea un buffer TF2 e un listener
+  auto tf_buffer = std::make_shared<tf2_ros::Buffer>();
+  tf2_ros::TransformListener tf_listener(*tf_buffer);
+
+/* // VERS 1 of updateRobotState - not in use
+  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor("robot_description", tf_buffer));
   if(!planning_scene_monitor_->getPlanningScene())
   {
     ROS_ERROR("Planning scene not configured");
@@ -57,9 +63,16 @@ bool checkForJointSoln(const std::vector<double>& soln)
     return true;
 }
 
+void CreateMarker::jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state){
+  joint_state_update_ = *joint_state;
+  ROS_INFO_STREAM("Joint state received");
+}
+
 void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, moveit::core::RobotStatePtr robot_state, bool arm_only)
 {
   if(!arm_only){
+
+  /* //VERS 1 for robot state update - using planning scene monitor - gave issues
     if(!planning_scene_monitor_){
       ROS_ERROR("Planning scene not configured");
       return;
@@ -68,24 +81,91 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
     planning_scene_monitor_->getPlanningScene()->getCurrentStateNonConst().update();
     planning_scene_monitor_->updateFrameTransforms();
     const moveit::core::RobotState& current_state = planning_scene_monitor_->getPlanningScene()->getCurrentState();
-    ////current_state.printStateInfo(); 
+    current_state.printStateInfo(); 
 
     // Get all joint names
     const std::vector<std::string>& joint_names = current_state.getVariableNames();
-    int start;
+    int start=0; // default> no virtual joints or fixed vj 
     
-    // check for virtual joints that need to be skipped
+    // check for virtual joints variables that need to be handled differently
     if(joint_names[0] == "virtual_joint/trans_x"){ // floating joint - variables: trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, rot_w 
       start=7;
     }else if (joint_names[0] == "virtual_joint/x"){ // planar joint - variables: x, y, theta
       start=3;
-    }else{ // no virtual joint or fixed (no variables)
-      start=0;
     }
-    
-    for(int i=start;i<joint_names.size();i++){
+
+    for (int i = 0; i < start; i++){  // set the virtual joint variables
+      double vj_pos = current_state.getVariablePosition(joint_names[i]);
+      robot_state->setVariablePosition(joint_names[i], vj_pos);
+      ROS_INFO(" VJ VAR %s - %f", joint_names[i].c_str(), vj_pos);
+    }
+    if(start!=0){
+      std::vector<double> vj_pos;
+      vj_pos.resize(start);
+      for (int i = 0; i < start; i++){  // set the virtual joint variables
+        vj_pos[i] = current_state.getVariablePosition(joint_names[i]);
+        ROS_INFO(" VJ VAR %s - %f", joint_names[i].c_str(), vj_pos);//////////////
+      }
+      robot_state->setJointPositions("virtual_joint", vj_pos);
+    }
+    for(int i=start;i<joint_names.size();i++){ // set the rest of the joint variables
       const double* joint_pos = current_state.getJointPositions(joint_names[i]);
       robot_state->setJointPositions(joint_names[i], joint_pos);
+      ROS_INFO(" var %d %s - %f", i, joint_names[i].c_str(), joint_pos[0]);
+    }
+  */
+    
+    // VERS 2 using joint state
+    // GET THE VALUES OF THE JOINTS FROM THE JOINT STATE PUBLISHER
+    sensor_msgs::JointState empty_state;
+    joint_state_update_ = empty_state;
+    joint_state_sub_ = nh.subscribe("/joint_states", 1, &CreateMarker::jointStateCallback, this);
+    while (joint_state_update_.name.size() == 0){
+      ROS_DEBUG("Waiting for joint state update"); /////////////////////
+      ros::Duration(0.5).sleep();
+    } 
+    joint_state_sub_.shutdown();
+    //check joint state received:
+    for(int i=0;i<joint_state_update_.name.size();i++){
+      //ROS_INFO_STREAM("Joint name: "<<joint_state_update_.name[i]);/////////////////////
+      //ROS_INFO_STREAM("Joint position: "<<joint_state_update_.position[i]);/////////////////////
+      robot_state->setJointPositions(joint_state_update_.name[i], &(joint_state_update_.position[i]));
+    }
+    // !!!! the joint state does NOT contain the virtual joint !!!! 
+    //check if the model has a virtual joint - if so get the value and update it in the robot state
+    if(robot_model_->hasJointModel("virtual_joint")){
+      tf2_ros::Buffer tf_buffer;
+      tf2_ros::TransformListener tf_listener(tf_buffer);
+      geometry_msgs::TransformStamped transform_stamped;
+      geometry_msgs::Pose root_link_pose;
+      try{
+        transform_stamped = tf_buffer.lookupTransform("odom", robot_model_->getRootLinkName(), ros::Time(0), ros::Duration(3.0));
+      }catch (tf2::TransformException &ex){
+        ROS_WARN("%s", ex.what());
+      }
+      if(robot_model_->getJointModel("virtual_joint")->getTypeName() == "Planar"){
+        std::vector<double> vj_pos(3);
+        vj_pos[0] = transform_stamped.transform.translation.x;
+        vj_pos[1] = transform_stamped.transform.translation.y;
+        tf2::Quaternion q(transform_stamped.transform.rotation.x, transform_stamped.transform.rotation.y, transform_stamped.transform.rotation.z, transform_stamped.transform.rotation.w);
+        tf2::Matrix3x3 m(q);
+        double roll, pitch, yaw;
+        m.getRPY(roll, pitch, yaw);
+        vj_pos[2] = yaw; // theta angle
+        //ROS_INFO("/////// vj planar %f %f %f ", vj_pos[0],vj_pos[1],vj_pos[2]);/////////////////////
+        robot_state->setJointPositions("virtual_joint", vj_pos);
+      }else if(robot_model_->getJointModel("virtual_joint")->getTypeName() == "Floating"){
+        std::vector<double> vj_pos(7);
+        vj_pos[0] = transform_stamped.transform.translation.x;
+        vj_pos[1] = transform_stamped.transform.translation.y;
+        vj_pos[2] = transform_stamped.transform.translation.z;
+        vj_pos[3] = transform_stamped.transform.rotation.x;
+        vj_pos[4] = transform_stamped.transform.rotation.y;
+        vj_pos[5] = transform_stamped.transform.rotation.z;
+        vj_pos[6] = transform_stamped.transform.rotation.w;
+        //ROS_INFO("/////// vj floating %f %f %f %f %f %f %f", vj_pos[0],vj_pos[1],vj_pos[2],vj_pos[3],vj_pos[4],vj_pos[5],vj_pos[6]);/////////////////////
+        robot_state->setJointPositions("virtual_joint", vj_pos);
+      } // if fixed there is no need to set the joint values of the virtual joint
     }
   }
 

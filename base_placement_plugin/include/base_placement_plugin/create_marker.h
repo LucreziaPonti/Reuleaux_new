@@ -7,6 +7,9 @@
 #include<tf2/LinearMath/Transform.h>
 #include<tf2/LinearMath/Quaternion.h>
 
+#include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
+
 #include <tf/tf.h>
 #include <tf_conversions/tf_eigen.h>
 
@@ -48,7 +51,7 @@ public:
   visualization_msgs::MarkerArray getDefaultMarkers();
 
 protected: 
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+  // planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_; // VERS 1 of updateRobotState - not in use
 
 private:
 
@@ -64,12 +67,20 @@ private:
   void updateMarkers(const geometry_msgs::Pose& base_pose, bool is_reachable, Eigen::Affine3d tf_first_link_to_root, visualization_msgs::MarkerArray& markers);
 
 
-
   std::string group_name_;
   ros::AsyncSpinner spinner;
   boost::scoped_ptr<MoveGroupInterface> group_;
   std::string parent_link;
   moveit::core::RobotModelConstPtr robot_model_; //Robot model const pointer
+
+  ros::NodeHandle nh;
+  std::string fixed_frame_;
+
+  // VERS 2 of updateRobotState - using joint state
+  ros::Subscriber joint_state_sub_;
+  void jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state);
+  sensor_msgs::JointState joint_state_update_;
+
 };
 
 #endif // CREATE_MARKER_H
