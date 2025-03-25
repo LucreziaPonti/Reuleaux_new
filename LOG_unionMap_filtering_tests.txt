@@ -1,15 +1,102 @@
 TEST SITUATION:
 - task set = pick_one_each_DEF.yaml 
-- simulation = eut_kitchen from tesi_reuleaux_tiago repo (launch: ***)
+- simulation = eut_kitchen from tesi_reuleaux_tiago repo (launch: tiago_full_sim.launch - after fully launched use planning_scene_kitchen.launch to load the collision objects using the fake obj recognition)
 - ROBOT = Tiago
-- IRM = tiago_arm_r0.08_new_frame_Inv_reachability.h5 (map_generation - alreafy filtered for self-collision)
-- Other data: method = IKSolutionScore ; base locations = 5 ; high score spheres = 15 ; 
+- IRM = tiago_arm_r0.08_new_frame_Inv_reachability.h5 (map_generation - already filtered for self-collision)
+- Other data: base locations = 5 ; high score spheres = 15 ; method = IKSolutionScore ;
 !!! done with createSpheres still using the IKFast cpp solver function to recompute the sphere score
 
 TEST: *describe test*
-RESULT: (copy paste output on screen containing: from "//////////////////////// START UNION MAP CREATION ////////////////////////" to "//////////////////////// END UNION MAP CREATION ////////////////////////" )
-COMMENT ON RESULT VALIDITY: 
+    RESULT: (copy paste output on screen containing: from "//////////////////////// START UNION MAP CREATION ////////////////////////" to "//////////////////////// END UNION MAP CREATION ////////////////////////" )
+    POSES OBTAINED: (copy paste the resulting poses)
+    COMMENT ON RESULT VALIDITY: 
+
+TEST: NO FILTERING
+    AssociatePose: no filtering
+    CreateSpheres: no filtering
+    RESULT:
+    [ INFO] [1742293035.901111239]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1742293036.702286125]: Time for AssociatePose: 801 ms
+    [ INFO] [1742293036.702356463]: Size of baseTrnsCol dataset: 143778
+    [ INFO] [1742293036.748387970]: begin creating UNION MAP -- may take some time because of collision checking
+    [ INFO] [1742293037.718530620]: finished creating UNION MAP
+    [ INFO] [1742293037.735375477]: Time for CreateSpheres: 1033 ms
+    [ INFO] [1742293037.735393410]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1742293037.735401214]: Poses in Union Map: 143778
+    [ INFO] [1742293037.735407053]: Spheres in Union Map: 7496
+    [ INFO] [1742293037.735414065]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    POSES OBTAINED: 
+    [ INFO] [1742293038.064726372]: Optimal base pose[1]: (1.10, -1.54, 1.58) (-0.30, 1.46, -1.41) - Score: 100.00
+    [ INFO] [1742293038.065377780]: Optimal base pose[2]: (1.10, -1.62, 1.58) (0.98, 0.16, 1.40) - Score: 83.33
+    [ INFO] [1742293038.066167447]: Optimal base pose[3]: (1.02, -1.62, 1.50) (2.00, 1.15, 0.84) - Score: 100.00
+    [ INFO] [1742293038.066883414]: Optimal base pose[4]: (1.10, -1.22, 1.74) (0.28, 0.32, 2.71) - Score: 100.00
+    [ INFO] [1742293038.067646447]: Optimal base pose[5]: (0.94, -1.06, 1.74) (-0.60, 0.62, -1.96) - Score: 100.00
+    [ INFO] [1742293038.067658626]: Best pose for this solution: (1.10, -1.54, 1.58) (-0.30, 1.46, -1.41)
+
+    COMMENT ON RESULT VALIDITY: not valid at all, positions all up in the air too high for them to be physically doable (for tiago)
 
 
+TEST: OLD FILTERING 
+    AssociatePose: no kind of filtering
+    CreateSpheres: for every pose of baseTrnsCol create instance of FilterCollisionPoses and call function check_collision
+    Filtering Function: create client for GetPlanningScene, for every collision object in the scene check if collision, if not check for robot validity
+    RESULT: 
+    [ INFO] [1742895174.072173974, 305.047000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1742895174.927920267, 305.715000000]: Time for AssociatePose: 855 ms
+    [ INFO] [1742895174.928017732, 305.715000000]: Size of baseTrnsCol dataset: 143778
+    [ INFO] [1742895174.982726778, 305.757000000]: begin creating UNION MAP -- may take some time because of collision checking
+    *** lots of warnings of TF_REPEATED_DATA ***
+    [ INFO] [1742895362.668910883, 440.951000000]: finished creating UNION MAP
+    [ INFO] [1742895362.693580323, 440.968000000]: Time for CreateSpheres: 187765 ms
+    [ INFO] [1742895362.693664533, 440.968000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1742895362.693678081, 440.968000000]: Poses in Union Map: 143778
+    [ INFO] [1742895362.693690655, 440.968000000]: Spheres in Union Map: 815
+    [ INFO] [1742895362.693709351, 440.968000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+    
+    POSES OBTAINED: 
+    [ INFO] [1742895362.985539121, 441.197000000]: Optimal base pose[1]: (0.94, -0.66, 1.10) (0.23, -0.36, -1.78) - Score: 100.00
+    [ INFO] [1742895362.986405521, 441.197000000]: Optimal base pose[2]: (0.86, -0.66, 1.10) (0.23, -0.36, -1.78) - Score: 100.00
+    [ INFO] [1742895362.987189431, 441.198000000]: Optimal base pose[3]: (0.46, -0.66, 1.10) (1.19, -0.62, -1.45) - Score: 100.00
+    [ INFO] [1742895362.988015563, 441.198000000]: Optimal base pose[4]: (1.02, -0.66, 1.10) (0.39, -0.16, -2.40) - Score: 100.00
+    [ INFO] [1742895362.988850666, 441.199000000]: Optimal base pose[5]: (1.26, -0.66, 1.10) (0.41, 0.10, -2.98) - Score: 83.33
+    [ INFO] [1742895362.988869142, 441.199000000]: Best pose for this solution: (0.94, -0.66, 1.10) (0.23, -0.36, -1.78)
+
+    COMMENT ON RESULT VALIDITY: at the side of the table all at same distance (due to filering with bounding box) not considering table legs space is different form table "center" space
+                                and same height due to height filtering for tiago limitation 
 
 
+TEST: 
+    
+    RESULT: 
+    
+    POSES OBTAINED: 
+
+    COMMENT ON RESULT VALIDITY: 
+
+
+TEST: 
+
+    RESULT: 
+    
+    POSES OBTAINED: 
+
+    COMMENT ON RESULT VALIDITY: 
+
+
+TEST: 
+
+    RESULT: 
+    
+    POSES OBTAINED: 
+
+    COMMENT ON RESULT VALIDITY: 
+
+
+TEST: 
+
+    RESULT: 
+    
+    POSES OBTAINED: 
+
+    COMMENT ON RESULT VALIDITY: 
