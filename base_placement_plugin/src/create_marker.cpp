@@ -15,6 +15,8 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
   //ROS_INFO_STREAM("Selected planning group: "<< group_->getName());
   robot_model_ = group_->getRobotModel();
 
+/* // VERS 1 of updateRobotState - not in use
+
   // Crea un buffer TF2 e un listener
   auto tf_buffer = std::make_shared<tf2_ros::Buffer>();
   tf2_ros::TransformListener tf_listener(*tf_buffer);

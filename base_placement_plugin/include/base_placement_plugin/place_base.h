@@ -58,6 +58,9 @@ public:
 
 private:
   std::string fixed_frame_;
+  std::string robot_root_link_name_;
+  std::string arm_base_link_name_;
+  std::string arm_root_link_name_;
 
 public Q_SLOTS:
   //!Getting the reachability data from widget
@@ -161,7 +164,6 @@ protected:
   void OuputputVizHandler(std::vector< geometry_msgs::Pose > po);
 
 
-
   //Transforming reachability data towards robot base
   void transformToRobotbase(std::multimap< std::vector< double >, std::vector< double > > armBasePoses,
                             std::multimap< std::vector< double >, std::vector< double > >& robotBasePoses);
@@ -220,6 +222,7 @@ protected:
 
   //Robot model cons pointer
   moveit::core::RobotModelConstPtr robot_model_;
+  moveit::core::RobotStatePtr robot_state_;
 
   //show unreachable models
   bool show_ureach_models_;
