@@ -20,8 +20,6 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
   // Crea un buffer TF2 e un listener
   auto tf_buffer = std::make_shared<tf2_ros::Buffer>();
   tf2_ros::TransformListener tf_listener(*tf_buffer);
-
-/* // VERS 1 of updateRobotState - not in use
   planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor("robot_description", tf_buffer));
   if(!planning_scene_monitor_->getPlanningScene())
   {

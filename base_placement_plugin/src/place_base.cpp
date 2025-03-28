@@ -333,11 +333,7 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
     bp_res.score = d;
     bp_pub.publish(bp_res);
     // printing the results in the terminal for check 
-    tf2::Quaternion quat(base_poses[i].orientation.x, base_poses[i].orientation.y, base_poses[i].orientation.z, base_poses[i].orientation.w);
-    tf2::Matrix3x3 m(quat);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-    ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) - Score: %.2f", i + 1, base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, roll,pitch, yaw,d);
+    ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f, %.2f) - Score: %.2f", i + 1, base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, base_poses[i].orientation.x, base_poses[i].orientation.y, base_poses[i].orientation.z, base_poses[i].orientation.w,d);
   }
   ROS_DEBUG("total score= %f",total_score);
   best_pose_ = best_pose;
@@ -348,11 +344,7 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
   bp_res.score = max_score;
   bp_pub.publish(bp_res);
   // printing the results in the terminal for check 
-  tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
-  tf2::Matrix3x3 m(quat);
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-  ROS_INFO("Best pose for this solution: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)", best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, roll,pitch, yaw);
+  ROS_INFO("Best pose for this solution: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f , %.2f)", best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
   
     double score = double(total_score/float(base_poses.size()));
   ROS_DEBUG("Average score= %f",score);
@@ -389,11 +381,7 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
     bp_res.score = d;
     bp_pub.publish(bp_res);
     // printing the results in the terminal for check 
-    tf2::Quaternion quat(base_poses[i].orientation.x, base_poses[i].orientation.y, base_poses[i].orientation.z, base_poses[i].orientation.w);
-    tf2::Matrix3x3 m(quat);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-    ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) - Score: %.2f", i + 1, base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, roll,pitch, yaw,d);
+    ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f, %.2f) - Score: %.2f", i + 1, base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, base_poses[i].orientation.x, base_poses[i].orientation.y, base_poses[i].orientation.z, base_poses[i].orientation.w,d);
     if(d>max_score){
       max_score = d;
       best_pose = base_poses[i];
@@ -408,11 +396,7 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
   bp_res.score = max_score;
   bp_pub.publish(bp_res);
   // printing the results in the terminal for check 
-  tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
-  tf2::Matrix3x3 m(quat);
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-  ROS_INFO("Best pose for this solution: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)", best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, roll,pitch, yaw);
+  ROS_INFO("Best pose for this solution: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f , %.2f)", best_pose_.position.x, best_pose_.position.y, best_pose_.position.z, best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
   
   double score = double(total_score/float(base_poses.size()));
   ROS_INFO("Score average = %.2f",score);
@@ -496,14 +480,17 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
   
   // added checks to make sure everything is loaded
   checkforRobotModel();
+  if(selected_group_.empty()){
+    ROS_WARN("no planning group selected - setting to default 'arm' - restart if needed");
+    selected_group_="arm";
+    ROS_INFO("////////create mark");
+    mark_ = new CreateMarker(selected_group_);
+  }
+
   robot_state_ = std::make_shared<moveit::core::RobotState>(robot_model_);
   std::vector<double> joint_soln_empty;
   mark_->updateRobotState(joint_soln_empty, robot_state_, false);
 
-  if(selected_group_.empty()){
-    ROS_WARN("no planning group selected - setting to default 'arm' - restart if needed");
-    selected_group_="arm";
-  }
   //extra global vars useful for the BP_RESULTS
   robot_root_link_name_ = robot_model_->getRootLinkName();
   const moveit::core::JointModelGroup* arm_jmp = robot_model_->getJointModelGroup(selected_group_);
@@ -722,9 +709,7 @@ void PlaceBase::findBaseByVerticalRobotModel()
   { // stores only the ones with highest score, as many as requested by user
     base_poses_user.push_back(base_poses[i]);
   }
-ROS_DEBUG("-- finito di fare le base poses in vertical rob mod - chiamiamo calculate score");
   double s = calculateScoreForRobotBase(GRASP_POSES_, base_poses_user);
-  ROS_DEBUG("- vertRobMod finito score: %f ",s);
   score_ = s;
   final_base_poses = base_poses_user;
 }
@@ -829,10 +814,11 @@ void PlaceBase::findBaseByGraspReachabilityScore()
     itr = basePoseWithHits.end();
     --itr;
     pose_scores.push_back(itr->second);
+    
+  }
     double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
     score_ = s;
     final_base_poses = pose_scores;
-  }
 }
 
 void PlaceBase::findBaseByIKSolutionScore()
@@ -846,7 +832,7 @@ void PlaceBase::findBaseByIKSolutionScore()
      As they are transformations of the grasp poses, it is natural that they will point downwards.
 
   */
-  ROS_INFO("Finding optimal base pose by GraspReachabilityScore.");
+  ROS_INFO("Finding optimal base pose by IKSolutionScore.");
   sphere_discretization::SphereDiscretization sd;
   kinematics::Kinematics kin;
   std::vector<geometry_msgs::Pose> pose_scores;
@@ -886,10 +872,10 @@ void PlaceBase::findBaseByIKSolutionScore()
     itr = basePoseWithHits.end();
     --itr;
     pose_scores.push_back(itr->second);
+  }
     double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
     score_ = s;
     final_base_poses = pose_scores;
-  }
 }
 
 void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
