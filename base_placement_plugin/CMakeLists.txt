@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rqt_gui_cpp
   rviz
   std_msgs
+  std_srvs
   geometry_msgs
   visualization_msgs
   tf

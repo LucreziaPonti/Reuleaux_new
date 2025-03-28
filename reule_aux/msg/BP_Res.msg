@@ -1,3 +1,5 @@
 bool best_pose
-int32 score
+string robot_root_frame
+string arm_root_frame
+float32 score
 geometry_msgs/Pose pose

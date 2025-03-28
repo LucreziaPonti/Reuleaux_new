@@ -7,6 +7,7 @@
 
 #include <pluginlib/class_loader.h>
 #include <std_msgs/String.h>
+#include <std_srvs/Trigger.h>
 #include <base_placement_plugin/create_marker.h>
 
 #include<moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -179,6 +180,8 @@ protected:
   bool checkforRobotModel();
 
   void getRobotGroups(std::vector<std::string>& groups);
+
+  void reset_BP_result_node();
 
   int selected_method_;
   int selected_op_type_;

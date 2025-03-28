@@ -303,6 +303,7 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
   
   ros::NodeHandle n;
   ros::Publisher bp_pub = n.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
+  ros::Duration(1).sleep();
   reule_aux::BP_Res bp_res;
 
   ROS_DEBUG(" start calc score with %ld poses",base_poses.size());
@@ -329,6 +330,8 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
 
     // publishing (publish all the poses as not the best - also the one that will be considered the best)
     bp_res.best_pose=false;
+    bp_res.robot_root_frame=robot_root_link_name_;
+    bp_res.arm_root_frame=robot_root_link_name_; // the results given are of the robot base
     bp_res.pose = base_poses[i];
     bp_res.score = d;
     bp_pub.publish(bp_res);
@@ -340,6 +343,8 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
 
   // publishing of the best pose (remember that this pose has also been published before - create the node that receives them so that it is accounted for)
   bp_res.best_pose=true;
+  bp_res.robot_root_frame=robot_root_link_name_;
+  bp_res.arm_root_frame=robot_root_link_name_; // the results given are of the robot base
   bp_res.pose = best_pose;
   bp_res.score = max_score;
   bp_pub.publish(bp_res);
@@ -361,7 +366,7 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
   ros::NodeHandle n;
   ros::Publisher bp_pub = n.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
   reule_aux::BP_Res bp_res;
-
+  ros::Duration(2).sleep();
   geometry_msgs::Pose best_pose;
   for(int i=0;i<base_poses.size();i++)
   {
@@ -377,8 +382,10 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
     
     // publishing (publish all the poses as not the best - also the one that will be considered the best)
     bp_res.best_pose=false;
+    bp_res.robot_root_frame=robot_root_link_name_;
+    bp_res.arm_root_frame=arm_root_link_name_; // the results given are of the arm/manipulator base
     bp_res.pose = base_poses[i];
-    bp_res.score = d;
+    bp_res.score = d;   
     bp_pub.publish(bp_res);
     // printing the results in the terminal for check 
     ROS_INFO("Optimal base pose[%d]: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f, %.2f) - Score: %.2f", i + 1, base_poses[i].position.x, base_poses[i].position.y, base_poses[i].position.z, base_poses[i].orientation.x, base_poses[i].orientation.y, base_poses[i].orientation.z, base_poses[i].orientation.w,d);
@@ -392,6 +399,8 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
 
   // publishing of the best pose (remember that this pose has also been published before - create the node that receives them so that it is accounted for)
   bp_res.best_pose=true;
+  bp_res.robot_root_frame=robot_root_link_name_;
+  bp_res.arm_root_frame=arm_root_link_name_; // the results given are of the arm/manipulator base
   bp_res.pose = best_pose;
   bp_res.score = max_score;
   bp_pub.publish(bp_res);
@@ -461,6 +470,22 @@ void PlaceBase::transformToRobotbase(std::multimap< std::vector< double >, std::
   }
 }
 
+void PlaceBase::reset_BP_result_node(){
+  ros::NodeHandle nh;
+  ros::ServiceClient client = nh.serviceClient<std_srvs::Trigger>("move_to_bp_result/reset"); 
+  std_srvs::Trigger srv;
+  if (client.call(srv)){
+    if (srv.response.success){
+      ROS_INFO("move_to_bp_result/Reset service called successfully: %s", srv.response.message.c_str());
+    }else{
+      ROS_WARN("move_to_bp_result/Reset service call failed: %s", srv.response.message.c_str());
+    }
+  }else{
+    ROS_WARN("Failed to call reset service - if needed call manually and redo the findBase");
+  }
+
+}
+
 
 
 bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
@@ -478,7 +503,7 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
   Q_EMIT basePlacementProcessStarted();
   score_ = 0;
   
-  // added checks to make sure everything is loaded
+  // added checks to make sure everything is loaded 
   checkforRobotModel();
   if(selected_group_.empty()){
     ROS_WARN("no planning group selected - setting to default 'arm' - restart if needed");
@@ -500,7 +525,9 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
   int position = std::find(full_link_names.begin(), full_link_names.end(), arm_base_link_name_) -full_link_names.begin() ;
   arm_root_link_name_ = full_link_names[position-1];
 
-    
+  reset_BP_result_node();
+
+
   if (grasp_poses.size() == 0)
     ROS_ERROR_STREAM("Please provide atleast one grasp pose.");
 
@@ -816,9 +843,9 @@ void PlaceBase::findBaseByGraspReachabilityScore()
     pose_scores.push_back(itr->second);
     
   }
-    double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
-    score_ = s;
-    final_base_poses = pose_scores;
+  double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
+  score_ = s;
+  final_base_poses = pose_scores;
 }
 
 void PlaceBase::findBaseByIKSolutionScore()
@@ -873,9 +900,9 @@ void PlaceBase::findBaseByIKSolutionScore()
     --itr;
     pose_scores.push_back(itr->second);
   }
-    double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
-    score_ = s;
-    final_base_poses = pose_scores;
+  double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
+  score_ = s;
+  final_base_poses = pose_scores;
 }
 
 void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)

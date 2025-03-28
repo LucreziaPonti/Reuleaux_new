@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   move_base_msgs
   tf2
+  tf2_ros
+  tf2_geometry_msgs
   control_msgs
 )
 
@@ -58,11 +60,18 @@ include_directories(
 )
 
 # Add your executable
-#add_executable(reuleaux_bp_to_nav src/reuleaux_bp_to_nav.cpp)
+add_executable(move_to_bp_result src/move_to_bp_result.cpp)
 # Link against the required libraries
-#target_link_libraries(reuleaux_bp_to_nav  ${catkin_LIBRARIES})
+target_link_libraries(move_to_bp_result  ${catkin_LIBRARIES})
 # Install targets
-#install(TARGETS reuleaux_bp_to_nav  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS move_to_bp_result  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+# Add your executable
+add_executable(move_to_bp_result_TIAGO src/move_to_bp_result_TIAGO.cpp)
+# Link against the required libraries
+target_link_libraries(move_to_bp_result_TIAGO  ${catkin_LIBRARIES})
+# Install targets
+install(TARGETS move_to_bp_result_TIAGO  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
 install(DIRECTORY launch 
