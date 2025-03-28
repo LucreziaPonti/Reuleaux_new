@@ -1,5 +1,5 @@
 # Reuleaux_new
-This repository contains the results obtained on the Reuleaux package (ORIGINAL REPO: https://wiki.ros.org/reuleaux) done for the thesis:
+This repository contains the results obtained with the work done on the Reuleaux package (ORIGINAL REPO: https://wiki.ros.org/reuleaux) for the thesis:
 **idk how it will actually be called**
 
 This work is a further developement from the previous work on the thesis **Reuleaux Optimization of Base Placement for Mobile Robots in a Kitchen Environment**, and takes its results (contained in the repo https://github.com/LucreziaPonti/tesi_reuleaux_tiago) as a starting point.
@@ -14,15 +14,19 @@ The other packages used in this thesis work are:
 
 - RML63-B : https://github.com/LucreziaPonti/RM63BforReuleaux - my repository containing the robot description and the moveit_config package (created with the Moveit Setup Assistant)
 
-*** grasp (?)
+- Full simulation : ** not in a repo yet ** - contains multiple packages that allow to create the full simulation with the robot TIAGo in a kitchen environment
+    - sim_gazebo : contains all the launch, map and config files for the kitchen simulation
+    - grasp : contains multiple packages, cloned from the repositories of Jennifer Buehler that provide different plugins for gazebo and RViz: to simulate a fake object recognition, load collisionobjects in the planning scene and execute grasps easily ( check out the original repos and all their wiki pages for more info: https://github.com/JenniferBuehler)
 
 
 ## Differences from the original REPO
 *da aggiungere una volta concluso il lavoro - vedi note per idee*
 
-- updated function **createMarker::updateRobotState** to update the full robot and not only the manipulator group (additional arg *arm_only* allows to choose to only update the manipulator 
+- updated function **createMarker::updateRobotState** to update the full robot and not only the manipulator group (additional arg *arm_only* allows to choose to only update the manipulator insted of all the robot)
     - added to the functions *CreateMarker::getDefaultMarkers* (used by *add_robot_base* - the UserIntuition method - to create the robot interactive button), *PlaceBase::transformToRobotbase* (used to create the robot_base IRM for VerticalRobotModel metod) and *PlaceBase::transformFromRobotbaseToArmBase* 
     - **ATTENTION** For this function to work properly make sure that in the SRDF file of your robot, if there is one, the virtual joint is called "virtual_joint" 
+- generalized the setup of the fixed frame in the base placement plugin: now it can be set at launch with the dedicated arg that loads a param, that is then used in all the pieces of the plugin that require it.
+
 
 ## Setup
 - ROS Noetic INSTALLATION: https://wiki.ros.org/noetic/Installation/Ubuntu
@@ -34,7 +38,7 @@ The other packages used in this thesis work are:
     ```
     sudo apt install ros-noetic-moveit
     ```
-- Install "additional" PKGs for BP_TO_NAV **!!!!! check se lo metto effettivamente**:
+- Install "additional" PKGs for BP_TO_NAV - if needed:
     ```
     sudo apt install ros-noetic-navigation
     ```
@@ -51,7 +55,7 @@ The other packages used in this thesis work are:
 - *map_creator*: contains the tools to create, load and visualize the RM and IRM; (as is it uses directly IKFast for the computation - no self-collision check)
 - *map_generation*: contains a node that allows to create the REACHABILITY MAP exploiting MoveIt!, to perform self-collision checks; It relies of map_creator for the computation of the IRM and the visualization of all maps;
 - **base_placement_plugin**: is the main package of the repository, it contains the plugin for Rviz that allows to create the task and compute the base placement of the robot. 
-- **reule_aux**: new auxiliary package which contains the definition of new msgs (like reule_aux/bp_results used in the BPP) and nodes useful for a better functioning of the repo
+- **reule_aux**: new auxiliary package which contains the definition of new msgs (like reule_aux/bp_results used in the BPP) and nodes useful for a better use of the repo in a complete simulation
 
 
 
