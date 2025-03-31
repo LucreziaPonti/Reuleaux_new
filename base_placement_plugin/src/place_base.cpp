@@ -7,7 +7,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <base_placement_plugin/place_base.h>
-//////#include <base_placement_plugin/filter_collision_poses.h>
+//OLDFILTER//#include <base_placement_plugin/filter_collision_poses.h>
 
 #include <octomap/octomap.h>
 #include <octomap/MapCollection.h>
@@ -213,7 +213,7 @@ void PlaceBase::setBasePlaceParams(int base_loc_size, int high_score_sp)
 void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses, /*baseTrnsCol*/
                    std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp, bool reduce_D)
 {
-//  ros::NodeHandle nn;
+  //OLDFILTER//ros::NodeHandle nn;
   kinematics::Kinematics k;
   std::vector<int> poseCount;
   ROS_INFO("begin creating UNION MAP -- may take some time");
@@ -240,9 +240,9 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
         prob_base_pose.position.z = (it->first)[2];
         prob_base_pose.orientation.w = 1.0;
         
-        ////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE *****REMOVE****
-        //////FilterCollisionPoses filter;
-        ///////if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, false)){ 
+        //OLDFILTER//////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE *****REMOVE****
+        //OLDFILTER//FilterCollisionPoses filter;
+        //OLDFILTER//if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, false)){ 
           ///////true = NOT IN COLLISION with any collision object of the planning scene -- acceptable base pos
           geometry_msgs::Pose base_pose_at_arm;
           transformFromRobotbaseToArmBase(prob_base_pose, base_pose_at_arm);
@@ -258,7 +258,7 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
           float d = (float(num_of_solns)/float(GRASP_POSES_.size()*8))*100;
           spColor.insert(std::pair< std::vector< double >, double >(it->first, double(d)));
           //// stores it in the union map associating score and pose
-        ///////}
+        //OLDFILTER//}
       }
      }
   }
@@ -270,15 +270,15 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
       prob_base_pose.position.x = (it->first)[0];
       prob_base_pose.position.y = (it->first)[1];
       prob_base_pose.position.z = (it->first)[2];
-      ////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE AND SATISFY ROBOT CONSTRAINTS (for tiago=torso's height)
-      ////////FilterCollisionPoses filter;
-      /////////if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, true)){ 
+      //OLDFILTER//////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE AND SATISFY ROBOT CONSTRAINTS (for tiago=torso's height)
+      //OLDFILTER//FilterCollisionPoses filter;
+      //OLDFILTER//if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, true)){ 
         //true = NOT IN COLLISION with any collision object of the planning scene -- acceptable base pos
         float d = ((float(basePoses.count(it->first))- min_number)/ (max_number - min_number)) * 100; //PLACE_BASE index
         if(d>1){
           spColor.insert(std::pair< std::vector< double >, double >(it->first, double(d)));
         }
-      ///////}
+      //OLDFILTER//}
     }
   }
 
@@ -1014,7 +1014,6 @@ void PlaceBase::showBaseLocationsbyArmModel(std::vector< geometry_msgs::Pose > p
 void PlaceBase::showBaseLocationsbyRobotModel(std::vector<geometry_msgs::Pose> po)
 {
   ROS_INFO("Showing Base Locations by Robot Model:");
-  //sphere_discretization::SphereDiscretization sd;
   kinematics::Kinematics k;
   boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
   imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
@@ -1056,9 +1055,9 @@ void PlaceBase::setReachabilityData(std::multimap< std::vector< double >, std::v
   PoseColFilter = PoseCollection;
   SphereCol = SphereCollection;
   res = resolution;
-  ROS_INFO("Size of poses dataset: %lu", PoseColFilter.size());
-  ROS_INFO("Size of Sphere dataset: %lu", SphereCol.size());
-  ROS_INFO("Resolution: %f", res);
+  ROS_INFO("Size of IRM poses dataset: %lu", PoseColFilter.size());
+  ROS_INFO("Size of IRM Sphere dataset: %lu", SphereCol.size());
+  ROS_INFO("IRM Resolution: %f", res);
 }
 
 

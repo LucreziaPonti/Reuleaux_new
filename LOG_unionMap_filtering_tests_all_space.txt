@@ -1,0 +1,74 @@
+TEST SITUATION:
+- task set = test_all_space.yaml 
+- simulation = eut_kitchen from tesi_reuleaux_tiago repo (launch: tiago_full_sim.launch - after fully launched use planning_scene_kitchen.launch to load the collision objects using the fake obj recognition)
+- ROBOT = Tiago
+- IRM = tiago_arm_r0.08_new_frame_Inv_reachability.h5 (map_generation - already filtered for self-collision)
+- Other data: base locations = 10 ; high score spheres = 10 ; method = PCA ;
+
+TEST: *describe test*
+    RESULT: (copy paste output on screen containing: from "//////////////////////// START UNION MAP CREATION ////////////////////////" to "//////////////////////// END UNION MAP CREATION ////////////////////////" )
+    PCOMMENT on FILTERING:  
+
+TEST: NO FILTERING
+    AssociatePose: no filtering
+    CreateSpheres: no filtering
+    RESULT:
+    [ INFO] [1743407432.916260765, 1332.706000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743407434.594462360, 1334.009000000]: Time for AssociatePose: 1678 ms
+    [ INFO] [1743407434.594493764, 1334.009000000]: Size of baseTrnsCol dataset: 260044
+    [ INFO] [1743407434.695305810, 1334.088000000]: begin creating UNION MAP -- may take some time
+    [ INFO] [1743407436.586017257, 1335.597000000]: finished creating UNION MAP
+    [ INFO] [1743407436.620672147, 1335.624000000]: Time for CreateSpheres: 2026 ms
+    [ INFO] [1743407436.620708724, 1335.624000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743407436.620719925, 1335.624000000]: Poses in Union Map: 260044
+    [ INFO] [1743407436.620734972, 1335.624000000]: Spheres in Union Map: 24797
+    [ INFO] [1743407436.620745881, 1335.624000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    COMMENT on FILTERING: no filtering happening - so any pose is assumed acceptable
+
+TEST: OLD FILTERING 
+    AssociatePose: no kind of filtering
+    CreateSpheres: for every pose of baseTrnsCol create instance of FilterCollisionPoses and call function check_collision
+    Filtering Function: create client for GetPlanningScene, for every collision object in the scene check if collision, if not check for robot validity
+    RESULT: 
+    [ INFO] [1743408327.028984290, 290.056000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743408328.718570737, 291.408000000]: Time for AssociatePose: 1689 ms
+    [ INFO] [1743408328.718604028, 291.408000000]: Size of baseTrnsCol dataset: 260044
+    [ INFO] [1743408328.818776295, 291.487000000]: begin creating UNION MAP -- may take some time
+    *** lots of warnings of TF_REPEATED_DATA ***
+    [ INFO] [1743408650.290459424, 528.123000000]: finished creating UNION MAP
+    [ INFO] [1743408650.336178778, 528.157000000]: Time for CreateSpheres: 321617 ms
+    [ INFO] [1743408650.336477269, 528.158000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743408650.371050148, 528.183000000]: Poses in Union Map: 260044
+    [ INFO] [1743408650.371108535, 528.183000000]: Spheres in Union Map: 3209
+    [ INFO] [1743408650.371130187, 528.183000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+    
+    COMMENT on FILTERING: takes veeery long ( 5 minutes vs 2 seconds without filering for createSpheres), not very accurate for navigation, 
+                            sometimes the retreiving of the planning scene fails and accepts some non-acceptable poses
+
+TEST: 
+    
+    RESULT: 
+    
+    COMMENT on FILTERING: 
+
+
+TEST: 
+
+    RESULT: 
+    
+    COMMENT on FILTERING:  
+
+
+TEST: 
+
+    RESULT: 
+    
+    COMMENT on FILTERING:  
+
+
+TEST: 
+
+    RESULT: 
+    
+    COMMENT on FILTERING:  

@@ -2,7 +2,11 @@
 
 namespace sphere_discretization
 {
-// SphereDiscretization::SphereDiscretization(){}
+  SphereDiscretization::SphereDiscretization(){
+    // get all parameters for filtering options
+
+
+ }
 
 octomap::OcTree* SphereDiscretization::generateSphereTree(const octomap::point3d& origin, float radius, float resolution)
 {
@@ -54,11 +58,15 @@ octomap::OcTree* SphereDiscretization::generateBoxTree(const octomap::point3d& o
 {
   octomap::OcTree* tree = new octomap::OcTree(resolution / 2);
   octomap::Pointcloud p;
+  float min_z = origin.z() - diameter * 1.5;
+  if (min_z<-resolution){
+    min_z=-resolution; // to exclude points underground from the start - with some "allowance"
+  }
   for (float x = origin.x() - diameter * 1.5; x <= origin.x() + diameter * 1.5; x += resolution)
   {
     for (float y = origin.y() - diameter * 1.5; y <= origin.y() + diameter * 1.5; y += resolution)
     {
-      for (float z = origin.z() - diameter * 1.5; z <= origin.z() + diameter * 1.5; z += resolution)
+      for (float z = min_z; z <= origin.z() + diameter * 1.5; z += resolution)
       {
         // tree ->insertRay(origin, point3d(x,y,z));
         octomap::point3d point;
@@ -578,10 +586,12 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
                                          const float resolution)
 {
   unsigned char maxDepth = 16;
-  float size_of_box = 1.5;
+  float size_of_box = 2.5;
   SphereDiscretization sd;
   octomap::point3d origin = octomap::point3d(0, 0, 0);
   octomap::OcTree* tree = sd.generateBoxTree(origin, size_of_box, resolution);
+// PRENDERE IL COLLISION OCTREE DELLA PLANNING SCENE COME DA REMOVE REACHABILITY DI COLLISION AWARE
+// ESCLUDERE QUEI PUNTI DALL' OCTREE CON CUI CREIAMO SPcENTER
   std::vector< octomap::point3d > spCenter;
   for (octomap::OcTree::leaf_iterator it = tree->begin_leafs(maxDepth), end = tree->end_leafs(); it != end; ++it)
   {
@@ -674,6 +684,8 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
     // https://github.com/ros-industrial-consortium/reuleaux/issues/68
     bool isInBox = (searchPoint.x >= min_x && searchPoint.x <= max_x) && (searchPoint.y >= min_y && searchPoint.y <= max_y) && (searchPoint.z >= min_z && searchPoint.z <= max_z);
     ROS_DEBUG("Point is in box: %d", isInBox);
+
+// FILTERING CON COSTMAP SE NECESSARIO "AGGIUNGENDOLO" AL ISINBOX PER L'ESSERE VALIDO
 
     if (isInBox) {
       octree.voxelSearch(searchPoint, pointIdxVec);

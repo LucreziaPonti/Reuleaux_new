@@ -24,7 +24,7 @@ namespace sphere_discretization
 class SphereDiscretization
 {
 public:
-   SphereDiscretization(){}
+   SphereDiscretization();
 
   ~SphereDiscretization(){}
 
