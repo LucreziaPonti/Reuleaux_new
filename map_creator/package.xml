@@ -57,6 +57,8 @@
   <run_depend>hdf5_cpp</run_depend>
   <run_depend>pcl_ros</run_depend>
   
+  <build_depend>nav_msgs</build_depend>  
+  <run_depend>nav_msgs</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

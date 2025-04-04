@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_geometry_msgs
   control_msgs
+  nav_msgs
 )
 
 
@@ -48,7 +49,7 @@ find_package(catkin REQUIRED COMPONENTS
 # Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   std_msgs geometry_msgs actionlib_msgs # Or other packages containing msgs
+   std_msgs geometry_msgs actionlib_msgs nav_msgs # Or other packages containing msgs
  )
 
 
@@ -72,6 +73,13 @@ add_executable(move_to_bp_result_TIAGO src/move_to_bp_result_TIAGO.cpp)
 target_link_libraries(move_to_bp_result_TIAGO  ${catkin_LIBRARIES})
 # Install targets
 install(TARGETS move_to_bp_result_TIAGO  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+#Add your executable
+add_executable(costmap_node src/costmap_node.cpp)
+# Link against the required libraries
+target_link_libraries(costmap_node  ${catkin_LIBRARIES})
+# Install targets
+install(TARGETS costmap_node  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
 install(DIRECTORY launch 

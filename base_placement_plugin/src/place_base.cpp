@@ -211,7 +211,7 @@ void PlaceBase::setBasePlaceParams(int base_loc_size, int high_score_sp)
 
 //Creating <spheres, ri> and <highscoringsp> multimap from the <sphere, poses> the bool determines wherther to make it 2d/3d
 void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses, /*baseTrnsCol*/
-                   std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp, bool reduce_D)
+                   std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp/*, ///// bool reduce_D*/)
 {
   //OLDFILTER//////ros::NodeHandle nn;
   kinematics::Kinematics k;
@@ -227,11 +227,11 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
   int max_number = *it;
   it = min_element(poseCount.begin(), poseCount.end());
   int min_number = *it;
-  if(reduce_D) // reduce_D=true -- "cuts" the sphere distribution of the IRM in the plane (from 3D to 2D) for VerticalRobotModel
-  {
+ /*if(reduce_D) // reduce_D=true -- "cuts" the sphere distribution of the IRM in the plane (from 3D to 2D) for VerticalRobotModel
+  {/////////
     for (std::multimap< std::vector< double >, std::vector< double > >::iterator it = basePoses.begin(); it != basePoses.end();++it)
     {
-      if((it->first)[2] < 0.06 && (it->first)[2] > -0.06) // poses on the ground 
+      if((it->first)[2] < 0.08 && (it->first)[2] > -0.08) // poses on the ground 
       {
         geometry_msgs::Pose prob_base_pose;
         prob_base_pose.position.x = (it->first)[0];
@@ -261,7 +261,7 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
       }
      }
   }
-  else{ ////use the whole 3D distribution
+  else{ //////use the whole 3D distribution*/
   //Determining color of spheres of 3d map
     for(std::multimap<std::vector<double>, std::vector<double> >::iterator it = basePoses.begin(); it!=basePoses.end();++it)
     {
@@ -279,7 +279,7 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
         }
       /////OLDFILTER//}
     }
-  }
+ //// }
 
  std::multiset<std::pair<double, std::vector<double> > > scoreWithSp; // ordered structure containing scored and sphere poses ORDERED BY SCORE (low to high)
  for(std::map<std::vector<double>, double>::iterator it = spColor.begin(); it !=spColor.end();++it )
@@ -544,8 +544,8 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       ROS_WARN("No Inverse Reachability Map found. Please provide an Inverse Reachability map.");
     }    else    {
       ////sphere_discretization::SphereDiscretization sd;
-      sd_ = new sphere_discretization::SphereDiscretization();
-  
+      sd_ = new sphere_discretization::SphereDiscretization;
+
       baseTrnsCol.clear();
       sphereColor.clear();
       highScoreSp.clear();
@@ -557,51 +557,59 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       ROS_INFO("//////////////////////// START UNION MAP CREATION ////////////////////////");
       if(selected_method_ == 3) {// findBaseByVerticalRobotModel 
         transformToRobotbase(PoseColFilter, transform_arm_to_root_, robot_PoseColfilter); // transforms IRM so that it contains robot base poses instead of arm base
-        sd_->associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res); //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
-        ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
-        createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
+        sd_->associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res, false, transform_arm_to_root_); //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
+    ////    ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
+    ////    createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
       }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
         /*////////////*/std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now(); 
-        sd_->associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res);
+        sd_->associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res,true,transform_arm_to_root_);
         /*////////////*/std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); 
         /*////////////*/std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); 
         /*////////////*/ROS_INFO("Time for AssociatePose: %ld ms", AP.count());  
+    ////    ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
+    ////    /*////////////*/std::chrono::high_resolution_clock::time_point start_CS = std::chrono::high_resolution_clock::now(); 
+    ////    createSpheres(baseTrnsCol, sphereColor, highScoreSp, false);
+    ////    /*////////////*/std::chrono::high_resolution_clock::time_point finish_CS = std::chrono::high_resolution_clock::now(); 
+    ////    /*////////////*/std::chrono::milliseconds CS = std::chrono::duration_cast<std::chrono::milliseconds>(finish_CS - start_CS); 
+    ////    /*////////////*/ROS_INFO("Time for CreateSpheres: %ld ms", CS.count()); 
+      }
+      if(baseTrnsCol.size()>0){ ////  //make sure i have at least 1 possible base pose
         ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
         /*////////////*/std::chrono::high_resolution_clock::time_point start_CS = std::chrono::high_resolution_clock::now(); 
-        createSpheres(baseTrnsCol, sphereColor, highScoreSp, false);
+        createSpheres(baseTrnsCol, sphereColor, highScoreSp);
         /*////////////*/std::chrono::high_resolution_clock::time_point finish_CS = std::chrono::high_resolution_clock::now(); 
         /*////////////*/std::chrono::milliseconds CS = std::chrono::duration_cast<std::chrono::milliseconds>(finish_CS - start_CS); 
         /*////////////*/ROS_INFO("Time for CreateSpheres: %ld ms", CS.count()); 
-      }
+        ROS_INFO("Union map has been created. Can now visualize Union Map.");
+        ROS_INFO("Poses in Union Map: %lu", baseTrnsCol.size());
+        ROS_INFO("Spheres in Union Map: %lu", sphereColor.size());
+        ROS_INFO("//////////////////////// END UNION MAP CREATION ////////////////////////");
 
-      ROS_INFO("Union map has been created. Can now visualize Union Map.");
-      ROS_INFO("Poses in Union Map: %lu", baseTrnsCol.size());
-      ROS_INFO("Spheres in Union Map: %lu", sphereColor.size());
-      ROS_INFO("//////////////////////// END UNION MAP CREATION ////////////////////////");
-
-
-      ROS_INFO("Start of computation of the base placement");
-      BasePlaceMethodHandler(); // depending on the method the poses are found (and stored in final_base_poses) and they are published on reule_aux/bp_results
-      
+        ROS_INFO("Start of computation of the base placement");
+        BasePlaceMethodHandler(); // depending on the method the poses are found (and stored in final_base_poses) and they are published on reule_aux/bp_results
+        
         /* ///////OLD FOR CYCLE THAT PRINTED THE RESULTS - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
-        for (int i = 0; i < final_base_poses.size(); ++i)
-        {
-          //Transforming the poses, as all are pointing towards
+          for (int i = 0; i < final_base_poses.size(); ++i)
+          {
+            //Transforming the poses, as all are pointing towards
 
-          tf2::Quaternion quat(final_base_poses[i].orientation.x, final_base_poses[i].orientation.y,
-                              final_base_poses[i].orientation.z, final_base_poses[i].orientation.w);
-          tf2::Matrix3x3 m(quat);
+            tf2::Quaternion quat(final_base_poses[i].orientation.x, final_base_poses[i].orientation.y,
+                                final_base_poses[i].orientation.z, final_base_poses[i].orientation.w);
+            tf2::Matrix3x3 m(quat);
 
-          double roll, pitch, yaw;
-          m.getRPY(roll, pitch, yaw);
-          ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1, final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll, pitch, yaw);
-        }
-      */
-      
-      ROS_INFO("Computation done. Start visualization");
-      OuputputVizHandler(final_base_poses);  // function to have different showBaseLocations methods
+            double roll, pitch, yaw;
+            m.getRPY(roll, pitch, yaw);
+            ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1, final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll, pitch, yaw);
+          }
+        */
+        
+        ROS_INFO("Computation done. Start visualization");
+        OuputputVizHandler(final_base_poses);  // function to have different showBaseLocations methods
+      }else{
+        ROS_ERROR("NO POSES IN THE UNION MAP - no possible base poses - aborting computation");
+        score_=-1;
+      }
     }
-  }
   }
   /* ///////OLD PRINT OF THE BEST POSE - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
     tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);

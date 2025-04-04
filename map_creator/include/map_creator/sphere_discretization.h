@@ -19,12 +19,16 @@
 #include <pcl_ros/transforms.h>
 //#include <pcl/segmentation/extract_polygonal_prism_data.h>
 
+
+#include <nav_msgs/OccupancyGrid.h>
+
+
 namespace sphere_discretization
 {
 class SphereDiscretization
 {
 public:
-   SphereDiscretization();
+   SphereDiscretization(){}
 
   ~SphereDiscretization(){}
 
@@ -114,7 +118,8 @@ public:
   //grasp poses, and calculates nearest neighbor search to associate poses with belonging spheres.
   void associatePose(std::multimap<std::vector<double>, std::vector<double> > &baseTrnsCol,
 					 const std::vector< geometry_msgs::Pose >& grasp_poses,
-					 const std::multimap<std::vector<double>, std::vector<double> > &PoseColFilter, const float resolution);
+					 const std::multimap<std::vector<double>, std::vector<double> > &PoseColFilter, const float resolution, 
+           const bool arm_pose, const Eigen::Affine3d arm_to_root_eigen);
 
   //! Compare two vectors, of length 3, for multimap search
   struct vec_comp_
@@ -127,6 +132,21 @@ public:
       return (fabs(v1[0] - v2[0]) < tol) && (fabs(v1[1] - v2[1]) < tol) && (fabs(v1[2] - v2[2]) < tol);
     }
   };
+
+private:
+  // PARAMETERS FOR THE FILTERING IN ASSOCIATEPOSES
+  tf2::Transform arm_to_root_tf_;
+  bool TIAGO_torso_filt_;
+  // parameters used to filter the union map using a 2-dimentional OCCUPANCY GRID MAP (e.g. global costmap)
+  bool OGM2d_filt_;
+  ros::Subscriber OGM2d_sub_;
+  std::string OGM2d_topic_;
+  bool OGM2d_rcvd_;
+  int OGM2d_cost_lim_; // limit of the "cell"'s cost after which the point is filtered out 
+  nav_msgs::OccupancyGrid ogm_2d_;
+
+  void OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg);
+
 };
 
 }  // namespace sphere_discretization

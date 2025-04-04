@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_move_group
   moveit_core
   interactive_markers
-  
+  nav_msgs
 )
 
 find_package(octomap REQUIRED)
@@ -33,7 +33,7 @@ add_message_files(
 
 generate_messages(
  DEPENDENCIES
- geometry_msgs std_msgs
+ geometry_msgs std_msgs 
 )
 
 catkin_package(

@@ -9,30 +9,36 @@ TEST SITUATION:
 TEST: *describe test*
     RESULT: (copy paste output on screen containing: from "//////////////////////// START UNION MAP CREATION ////////////////////////" to "//////////////////////// END UNION MAP CREATION ////////////////////////" )
     POSES OBTAINED: (copy paste the resulting poses)
+    TIME FOR ALL FIND BASE: 
     COMMENT ON RESULT VALIDITY: 
 
-TEST: NO FILTERING
+TEST: NO FILTERING - with changes in place_base at 02Apr
     AssociatePose: no filtering
     CreateSpheres: no filtering
     RESULT:
-    [ INFO] [1742293035.901111239]: //////////////////////// START UNION MAP CREATION ////////////////////////
-    [ INFO] [1742293036.702286125]: Time for AssociatePose: 801 ms
-    [ INFO] [1742293036.702356463]: Size of baseTrnsCol dataset: 143778
-    [ INFO] [1742293036.748387970]: begin creating UNION MAP -- may take some time because of collision checking
-    [ INFO] [1742293037.718530620]: finished creating UNION MAP
-    [ INFO] [1742293037.735375477]: Time for CreateSpheres: 1033 ms
-    [ INFO] [1742293037.735393410]: Union map has been created. Can now visualize Union Map.
-    [ INFO] [1742293037.735401214]: Poses in Union Map: 143778
-    [ INFO] [1742293037.735407053]: Spheres in Union Map: 7496
-    [ INFO] [1742293037.735414065]: //////////////////////// END UNION MAP CREATION ////////////////////////
+    [ INFO] [1743578256.880295478, 397.365000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743578257.734547890, 398.028000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1743578257.734575273, 398.028000000]: //////////////////////////// trns_col size = 143778
+    [ INFO] [1743578257.734592608, 398.028000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743578257.734600969, 398.028000000]: //////////////////////////// sfere per cui fa il voxel search = 28672
+    [ INFO] [1743578257.750321222, 398.039000000]: Time for AssociatePose: 869 ms
+    [ INFO] [1743578257.750442070, 398.040000000]: Size of baseTrnsCol dataset: 143778
+    [ INFO] [1743578258.802639456, 398.888000000]: Time for CreateSpheres: 1052 ms
+    [ INFO] [1743578258.802686543, 398.888000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743578258.802703432, 398.888000000]: Poses in Union Map: 143778
+    [ INFO] [1743578258.802712510, 398.888000000]: Spheres in Union Map: 7496
+    [ INFO] [1743578258.802722153, 398.888000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 6660 ms
 
     POSES OBTAINED: 
-    [ INFO] [1742293038.064726372]: Optimal base pose[1]: (1.10, -1.54, 1.58) (-0.30, 1.46, -1.41) - Score: 100.00
-    [ INFO] [1742293038.065377780]: Optimal base pose[2]: (1.10, -1.62, 1.58) (0.98, 0.16, 1.40) - Score: 83.33
-    [ INFO] [1742293038.066167447]: Optimal base pose[3]: (1.02, -1.62, 1.50) (2.00, 1.15, 0.84) - Score: 100.00
-    [ INFO] [1742293038.066883414]: Optimal base pose[4]: (1.10, -1.22, 1.74) (0.28, 0.32, 2.71) - Score: 100.00
-    [ INFO] [1742293038.067646447]: Optimal base pose[5]: (0.94, -1.06, 1.74) (-0.60, 0.62, -1.96) - Score: 100.00
-    [ INFO] [1742293038.067658626]: Best pose for this solution: (1.10, -1.54, 1.58) (-0.30, 1.46, -1.41)
+    [ INFO] [1743578261.595776913, 401.155000000]: Optimal base pose[1]: (1.14, -1.50, 1.62) (0.31, 0.36, 0.54, 0.70) - Score: 100.00
+    [ INFO] [1743578261.596569792, 401.155000000]: Optimal base pose[2]: (1.14, -1.58, 1.62) (0.31, 0.36, 0.54, 0.70) - Score: 83.33
+    [ INFO] [1743578261.597322124, 401.156000000]: Optimal base pose[3]: (1.06, -1.58, 1.54) (0.52, 0.56, -0.23, 0.60) - Score: 100.00
+    [ INFO] [1743578261.598019251, 401.157000000]: Optimal base pose[4]: (1.14, -1.18, 1.78) (0.04, 0.41, 0.66, 0.63) - Score: 100.00
+    [ INFO] [1743578261.598760652, 401.157000000]: Optimal base pose[5]: (0.98, -1.02, 1.78) (0.08, 0.40, -0.70, 0.58) - Score: 100.00
+    [ INFO] [1743578261.598776280, 401.157000000]: Best pose for this solution: (1.14, -1.50, 1.62) (0.31, 0.36, 0.54 , 0.70)
+
 
     COMMENT ON RESULT VALIDITY: not valid at all, positions all up in the air too high for them to be physically doable (for tiago)
 
@@ -66,32 +72,141 @@ TEST: OLD FILTERING
                                 and same height due to height filtering for tiago limitation 
 
 
-TEST: 
-    
+TEST: COSTMAP in trns_col creation for  (02Apr)
+    AssociatePose: filtering con global costmap at creation of trns_col (cost_lim_ = 70) - no robot specific filt
+    CreateSpheres: no filtering
+    ALL INSIDE AssociatePose 
+
     RESULT: 
+    [ INFO] [1743584672.685356918, 2702.676000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743584672.687906056, 2702.678000000]: waiting to receive occupancy grid map
+    [ INFO] [1743584672.818368542, 2702.778000000]: waiting to receive occupancy grid map
+    [ INFO] [1743584672.888950723, 2702.833000000]: Received global costmap with resolution: 0.050000, size: 1984 x 1984
+    [ INFO] [1743584673.413366447, 2703.229000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1743584673.413391671, 2703.229000000]: //////////////////////////// trns_col size = 47107
+    [ INFO] [1743584673.413406927, 2703.229000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743584673.413414417, 2703.229000000]: //////////////////////////// sfere per cui fa il voxel search = 142576
+    [ INFO] [1743584673.418330462, 2703.233000000]: Time for AssociatePose: 732 ms
+    [ INFO] [1743584673.418363914, 2703.233000000]: Size of baseTrnsCol dataset: 47107
+    [ INFO] [1743584673.733658289, 2703.473000000]: Time for CreateSpheres: 315 ms
+    [ INFO] [1743584673.733691191, 2703.474000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743584673.733703974, 2703.474000000]: Poses in Union Map: 47107
+    [ INFO] [1743584673.733711921, 2703.474000000]: Spheres in Union Map: 3183
+    [ INFO] [1743584673.733720760, 2703.474000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 5430 ms
     
     POSES OBTAINED: 
+    [ INFO] [1743584705.559140587, 2728.833000000]: Optimal base pose[1]: (0.98, -0.62, 1.10) (-0.07, -0.20, -0.75, 0.63) - Score: 100.00
+    [ INFO] [1743584705.559975432, 2728.833000000]: Optimal base pose[2]: (0.98, -0.54, 1.38) (0.00, 0.21, 0.91, -0.37) - Score: 100.00
+    [ INFO] [1743584705.560720420, 2728.833000000]: Optimal base pose[3]: (0.90, -0.62, 1.10) (-0.07, -0.20, -0.75, 0.63) - Score: 100.00
+    [ INFO] [1743584705.561408643, 2728.833000000]: Optimal base pose[4]: (0.66, -0.54, 1.30) (-0.12, -0.17, -0.52, 0.83) - Score: 100.00
+    [ INFO] [1743584705.562076689, 2728.833000000]: Optimal base pose[5]: (0.90, -0.54, 1.38) (-0.07, -0.20, -0.75, 0.63) - Score: 100.00
+    [ INFO] [1743584705.562089339, 2728.833000000]: Best pose for this solution: (0.98, -0.62, 1.10) (-0.07, -0.20, -0.75 , 0.63)
 
     COMMENT ON RESULT VALIDITY: 
 
 
-TEST: 
+TEST: COSTMAP - in spCenter for, in if(isInBox) (02Apr) - discarted 
+    AssociatePose: filtering con global costmap inside for(spCenter)>if(isInBox) (cost_lim_ = 70) - no robot specific filt
+    CreateSpheres: no filtering
+    ALL INSIDE AssociatePose 
 
     RESULT: 
-    
+    [ INFO] [1743584418.446677471, 2509.063000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743584418.456017088, 2509.078000000]: waiting to receive occupancy grid map
+    [ INFO] [1743584418.580550794, 2509.178000000]: waiting to receive occupancy grid map
+    [ INFO] [1743584418.658130858, 2509.235000000]: Received global costmap with resolution: 0.050000, size: 1984 x 1984
+    [ INFO] [1743584419.264462449, 2509.695000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1743584419.264489849, 2509.695000000]: //////////////////////////// trns_col size = 143778
+    [ INFO] [1743584419.264506342, 2509.695000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743584419.264516063, 2509.695000000]: //////////////////////////// sfere per cui fa il voxel search = 28672
+    [ INFO] [1743584419.278934510, 2509.706000000]: Time for AssociatePose: 832 ms
+    [ INFO] [1743584419.279040868, 2509.706000000]: Size of baseTrnsCol dataset: 48789
+    [ INFO] [1743584419.604913215, 2509.955000000]: Time for CreateSpheres: 325 ms
+    [ INFO] [1743584419.604960936, 2509.955000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743584419.604973150, 2509.955000000]: Poses in Union Map: 48789
+    [ INFO] [1743584419.604983943, 2509.955000000]: Spheres in Union Map: 2976
+    [ INFO] [1743584419.604994191, 2509.955000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 4276 ms
+
     POSES OBTAINED: 
+    [ INFO] [1743584422.408386342, 2512.155000000]: Optimal base pose[1]: (0.98, -0.62, 1.10) (-0.07, -0.20, -0.75, 0.63) - Score: 100.00
+    [ INFO] [1743584422.409232468, 2512.156000000]: Optimal base pose[2]: (0.98, -0.54, 1.38) (0.00, 0.21, 0.91, -0.37) - Score: 100.00
+    [ INFO] [1743584422.410326344, 2512.157000000]: Optimal base pose[3]: (0.90, -0.62, 1.10) (-0.07, -0.20, -0.75, 0.63) - Score: 100.00
+    [ INFO] [1743584422.411015980, 2512.157000000]: Optimal base pose[4]: (0.66, -0.54, 1.30) (-0.12, -0.17, -0.52, 0.83) - Score: 100.00
+    [ INFO] [1743584422.411692041, 2512.158000000]: Optimal base pose[5]: (0.90, -0.54, 1.38) (-0.07, -0.20, -0.75, 0.63) - Score: 100.00
+    [ INFO] [1743584422.411705807, 2512.158000000]: Best pose for this solution: (0.98, -0.62, 1.10) (-0.07, -0.20, -0.75 , 0.63)
+    [ INFO] [1743584422.411715951, 2512.158000000]: Score average = 100.00
+
 
     COMMENT ON RESULT VALIDITY: 
 
 
-TEST: 
+TEST: ROBOT FILTERING (orientation "close" to z vertical + tiago torso limits) (no ros_info) (04Apr)
 
     RESULT: 
+    [ INFO] [1743740119.533928135, 460.492000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743740119.822034303, 460.707000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1743740119.822106108, 460.707000000]: //////////////////////////// trns_col size = 1584
+    [ INFO] [1743740119.822134199, 460.707000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743740119.822161116, 460.707000000]: //////////////////////////// sfere per cui fa il voxel search = 17408
+    [ INFO] [1743740119.822410264, 460.708000000]: Time for AssociatePose: 288 ms
+    [ INFO] [1743740119.822421864, 460.708000000]: Size of baseTrnsCol dataset: 1305
+    [ INFO] [1743740119.828879313, 460.712000000]: Time for CreateSpheres: 6 ms
+    [ INFO] [1743740119.828905022, 460.712000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743740119.828912738, 460.712000000]: Poses in Union Map: 1305
+    [ INFO] [1743740119.828922799, 460.712000000]: Spheres in Union Map: 363
+    [ INFO] [1743740119.828931038, 460.712000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
     
     POSES OBTAINED: 
+    [ INFO] [1743740122.467375234, 462.738000000]: Optimal base pose[1]: (0.50, -1.82, 1.18) (0.10, 0.02, 0.37, 0.92) - Score: 33.33
+    [ INFO] [1743740122.468068534, 462.738000000]: Optimal base pose[2]: (0.34, -1.58, 1.18) (0.10, 0.02, 0.37, 0.92) - Score: 66.67
+    [ INFO] [1743740122.468879046, 462.738000000]: Optimal base pose[3]: (1.30, -1.18, 1.18) (0.08, -0.07, 0.96, 0.24) - Score: 100.00
+    [ INFO] [1743740122.469647359, 462.738000000]: Optimal base pose[4]: (1.22, -1.34, 1.18) (0.10, -0.04, 0.84, 0.53) - Score: 100.00
+    [ INFO] [1743740122.470426435, 462.738000000]: Optimal base pose[5]: (1.46, -0.94, 1.18) (0.08, -0.07, 0.96, 0.24) - Score: 83.33
+    [ INFO] [1743740122.470439421, 462.738000000]: Best pose for this solution: (1.30, -1.18, 1.18) (0.08, -0.07, 0.96 , 0.24)
 
     COMMENT ON RESULT VALIDITY: 
 
+TEST: COSTMAP filtering + ROBOT FILTERING (04Apr)
+    AssociatePose: filters pose by pose considering first - if there are any - the robot constraints (in this case the tiago torso height and orientation) and then the costmap. 
+                    !! being arm poses in the costmap filtering there is an additional step of transforming the arm pose into robot base pose and using that to check against the costmap 
+                    this allows to make sure that the robot can navigate to that position
+    CreateSpheres: removed the if(reduceD) because the filtering for height is already done before
+
+    RESULT: 
+    [ INFO] [1743744609.904071611, 3904.837000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743744609.907053301, 3904.839000000]: waiting to receive occupancy grid map
+    [ INFO] [1743744610.037263342, 3904.939000000]: waiting to receive occupancy grid map
+    [ INFO] [1743744610.078632267, 3904.968000000]: Received global costmap with resolution: 0.050000, size: 1984 x 1984
+    [ INFO] [1743744610.171543224, 3905.039000000]: ///TF: 0.062000 0.000000 -1.036595 0.000000 0.000000 0.000000 1.000000 
+    [ INFO] [1743744610.467788927, 3905.259000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1743744610.467852770, 3905.260000000]: //////////////////////////// trns_col size = 380
+    [ INFO] [1743744610.467875123, 3905.260000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743744610.467894853, 3905.260000000]: //////////////////////////// sfere per cui fa il voxel search = 17408
+    [ INFO] [1743744610.468103215, 3905.260000000]: Time for AssociatePose: 564 ms
+    [ INFO] [1743744610.468121881, 3905.260000000]: Size of baseTrnsCol dataset: 305
+    [ INFO] [1743744610.469503887, 3905.260000000]: Time for CreateSpheres: 1 ms
+    [ INFO] [1743744610.469532767, 3905.260000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743744610.469572712, 3905.260000000]: Poses in Union Map: 305
+    [ INFO] [1743744610.469608034, 3905.260000000]: Spheres in Union Map: 88
+    [ INFO] [1743744610.469700918, 3905.260000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 3661 ms
+
+    POSES OBTAINED: 
+    [ INFO] [1743744613.108093059, 3907.277000000]: Optimal base pose[1]: (0.98, -0.54, 1.18) (0.04, 0.10, -0.53, 0.84) - Score: 66.67
+    [ INFO] [1743744613.108920270, 3907.277000000]: Optimal base pose[2]: (0.98, -0.70, 1.18) (0.05, -0.09, 0.99, -0.07) - Score: 100.00
+    [ INFO] [1743744613.109643348, 3907.277000000]: Optimal base pose[3]: (0.90, -0.46, 1.18) (0.01, 0.10, -0.76, 0.64) - Score: 66.67
+    [ INFO] [1743744613.110461489, 3907.277000000]: Optimal base pose[4]: (0.90, -0.46, 1.10) (0.04, 0.10, -0.53, 0.84) - Score: 66.67
+    [ INFO] [1743744613.111161861, 3907.277000000]: Optimal base pose[5]: (0.74, -0.46, 1.18) (0.04, 0.10, -0.53, 0.84) - Score: 66.67
+    [ INFO] [1743744613.111177884, 3907.277000000]: Best pose for this solution: (0.98, -0.70, 1.18) (0.05, -0.09, 0.99 , -0.07)
+
+    COMMENT ON RESULT VALIDITY:
+    Process is sped up by a lot (it takes almost half the time) and the results are all valid and feasible
+    *** also tried to use VerticalRobotModel and obtained results coherent to these ones
 
 TEST: 
 

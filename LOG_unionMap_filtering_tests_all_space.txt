@@ -9,20 +9,24 @@ TEST: *describe test*
     RESULT: (copy paste output on screen containing: from "//////////////////////// START UNION MAP CREATION ////////////////////////" to "//////////////////////// END UNION MAP CREATION ////////////////////////" )
     PCOMMENT on FILTERING:  
 
-TEST: NO FILTERING
+TEST: NO FILTERING - with changes in place_base at 02Apr
     AssociatePose: no filtering
     CreateSpheres: no filtering
     RESULT:
-    [ INFO] [1743407432.916260765, 1332.706000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
-    [ INFO] [1743407434.594462360, 1334.009000000]: Time for AssociatePose: 1678 ms
-    [ INFO] [1743407434.594493764, 1334.009000000]: Size of baseTrnsCol dataset: 260044
-    [ INFO] [1743407434.695305810, 1334.088000000]: begin creating UNION MAP -- may take some time
-    [ INFO] [1743407436.586017257, 1335.597000000]: finished creating UNION MAP
-    [ INFO] [1743407436.620672147, 1335.624000000]: Time for CreateSpheres: 2026 ms
-    [ INFO] [1743407436.620708724, 1335.624000000]: Union map has been created. Can now visualize Union Map.
-    [ INFO] [1743407436.620719925, 1335.624000000]: Poses in Union Map: 260044
-    [ INFO] [1743407436.620734972, 1335.624000000]: Spheres in Union Map: 24797
-    [ INFO] [1743407436.620745881, 1335.624000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+    [ INFO] [1743582336.704746401, 871.764000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743582338.147021641, 872.881000000]: //////////////////////////// dimensione for graspxIRM = 287556
+    [ INFO] [1743582338.147054701, 872.881000000]: //////////////////////////// trns_col size = 287556
+    [ INFO] [1743582338.147063047, 872.881000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743582338.147071850, 872.881000000]: //////////////////////////// sfere per cui fa il voxel search = 124108
+    [ INFO] [1743582338.179307966, 872.905000000]: Time for AssociatePose: 1474 ms
+    [ INFO] [1743582338.179344436, 872.905000000]: Size of baseTrnsCol dataset: 253266
+    [ INFO] [1743582340.140839605, 874.471000000]: Time for CreateSpheres: 1961 ms
+    [ INFO] [1743582340.140868519, 874.471000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743582340.140876687, 874.471000000]: Poses in Union Map: 253266
+    [ INFO] [1743582340.140883437, 874.471000000]: Spheres in Union Map: 24180
+    [ INFO] [1743582340.140890558, 874.471000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    TIME FOR ALL FIND BASE: 7462 ms
 
     COMMENT on FILTERING: no filtering happening - so any pose is assumed acceptable
 
@@ -46,26 +50,85 @@ TEST: OLD FILTERING
     COMMENT on FILTERING: takes veeery long ( 5 minutes vs 2 seconds without filering for createSpheres), not very accurate for navigation, 
                             sometimes the retreiving of the planning scene fails and accepts some non-acceptable poses
 
-TEST: 
-    
+TEST: COSTMAP tests - in trns_col creation for (02Apr)
+    AssociatePose: filtering con global costmap at creation of trns_col (cost_lim_ = 70) - no robot specific filt
+    CreateSpheres: no filtering
+    ALL INSIDE AssociatePose
+
     RESULT: 
-    
+    [ INFO] [1743583281.584313810, 1602.584000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743583281.586586164, 1602.585000000]: waiting to receive occupancy grid map
+    [ INFO] [1743583281.721752809, 1602.685000000]: waiting to receive occupancy grid map
+    [ INFO] [1743583281.793450369, 1602.740000000]: Received global costmap with resolution: 0.050000, size: 1984 x 1984
+    [ INFO] [1743583283.058530715, 1603.732000000]: //////////////////////////// dimensione for graspxIRM = 287556
+    [ INFO] [1743583283.058576792, 1603.732000000]: //////////////////////////// trns_col size = 216551
+    [ INFO] [1743583283.058586062, 1603.732000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743583283.058594929, 1603.732000000]: //////////////////////////// sfere per cui fa il voxel search = 124108
+    [ INFO] [1743583283.081672224, 1603.750000000]: Time for AssociatePose: 1497 ms
+    [ INFO] [1743583283.081705298, 1603.750000000]: Size of baseTrnsCol dataset: 191606
+    [ INFO] [1743583284.522203662, 1604.881000000]: Time for CreateSpheres: 1440 ms
+    [ INFO] [1743583284.522237539, 1604.881000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743583284.522249205, 1604.881000000]: Poses in Union Map: 191606
+    [ INFO] [1743583284.522257760, 1604.881000000]: Spheres in Union Map: 17010
+    [ INFO] [1743583284.522265802, 1604.881000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 5797 ms
+
     COMMENT on FILTERING: 
 
 
-TEST: 
+TEST: COSTMAP  tests - in spCenter for, in if(isInBox) (02Apr)
+    AssociatePose: filtering con global costmap inside for(spCenter)>if(isInBox) (cost_lim_ = 70) - no robot specific filt
+    CreateSpheres: no filtering
+    ALL INSIDE AssociatePose
 
     RESULT: 
+    [ INFO] [1743583653.510312579, 1893.137000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1743583653.537127183, 1893.156000000]: waiting to receive occupancy grid map
+    [ INFO] [1743583653.670365592, 1893.256000000]: waiting to receive occupancy grid map
+    [ INFO] [1743583653.678914561, 1893.261000000]: Received global costmap with resolution: 0.050000, size: 1984 x 1984
+    [ INFO] [1743583654.991622011, 1894.296000000]: //////////////////////////// dimensione for graspxIRM = 287556
+    [ INFO] [1743583654.991647691, 1894.296000000]: //////////////////////////// trns_col size = 287556
+    [ INFO] [1743583654.991663562, 1894.296000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743583654.991671445, 1894.296000000]: //////////////////////////// sfere per cui fa il voxel search = 124108
+    [ INFO] [1743583655.023558438, 1894.319000000]: Time for AssociatePose: 1513 ms
+    [ INFO] [1743583655.023656324, 1894.319000000]: Size of baseTrnsCol dataset: 190685
+    [ INFO] [1743583656.437678161, 1895.443000000]: Time for CreateSpheres: 1413 ms
+    [ INFO] [1743583656.437732222, 1895.443000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743583656.437742175, 1895.444000000]: Poses in Union Map: 190685
+    [ INFO] [1743583656.437751311, 1895.444000000]: Spheres in Union Map: 16254
+    [ INFO] [1743583656.437758971, 1895.444000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 6930 ms
     
     COMMENT on FILTERING:  
 
 
-TEST: 
+TEST: ROBOT FILTERING (orientation "close" to z vertical + tiago torso limits) (04Apr) !!! need to remove tiago height filtering bc filters everithing out
+
+    RESULT: 
+    [ INFO] [1743740777.153024327, 929.139000000]: //////////////////////////// dimensione for graspxIRM = 287556
+    [ INFO] [1743740777.153074881, 929.139000000]: //////////////////////////// trns_col size = 287556
+    [ INFO] [1743740777.153093208, 929.139000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1743740777.153103846, 929.139000000]: //////////////////////////// sfere per cui fa il voxel search = 124108
+    [ INFO] [1743740777.186759582, 929.161000000]: Time for AssociatePose: 1461 ms
+    [ INFO] [1743740777.186805704, 929.161000000]: Size of baseTrnsCol dataset: 253266
+    [ INFO] [1743740779.123554147, 930.473000000]: Time for CreateSpheres: 1936 ms
+    [ INFO] [1743740779.123598939, 930.473000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1743740779.123608113, 930.473000000]: Poses in Union Map: 253266
+    [ INFO] [1743740779.123616508, 930.473000000]: Spheres in Union Map: 24180
+    [ INFO] [1743740779.123624819, 930.473000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 7761 ms
+
+    COMMENT on FILTERING:  adding the "prep" for the robot filtering does not add much time to the computation, if any
+
+
+TEST: COSTMAP filtering + ROBOT FILTERING (04Apr) - no sense doing it bc filter all out
 
     RESULT: 
     
     COMMENT on FILTERING:  
-
 
 TEST: 
 

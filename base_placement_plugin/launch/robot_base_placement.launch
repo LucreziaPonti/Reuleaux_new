@@ -5,6 +5,12 @@
     <arg name = "fixed_frame" default="odom"/>
     <arg name="bp_results" default="false"/>
 
+    <!--PARAMETERS FOR THE FILTERING of the union map - used within sphere_discretization::associatePose-->
+    <arg name="OGM2d_filtering" default="false"/>
+    <arg name = "OGM2d_topic" default="/move_base/global_costmap/costmap"/>
+    <arg name = "OGM2d_cost_threshold" default="70"/>
+    <arg name="TIAGO_torso_filtering" default="true"/>
+
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
     <!--ROBOTS USED: rm_63_b_moveit_config  -  tiago_moveit_config   -  panda_moveit_config-->
     <include file="$(find tiago_moveit_config)/launch/demo.launch"> 
@@ -15,6 +21,10 @@
     <include file="$(find base_placement_plugin)/launch/base_placement.launch">
         <arg name="bp_results" value="$(arg bp_results)"/>   
         <arg name="fixed_frame" value="$(arg fixed_frame)"/>
+        <arg name="OGM2d_filtering" value="$(arg OGM2d_filtering)"/>
+        <arg name="OGM2d_topic" value="$(arg OGM2d_topic)"/>
+        <arg name="OGM2d_cost_threshold" value="$(arg OGM2d_cost_threshold)"/>
+        <arg name = "TIAGO_torso_filtering" value="$(arg TIAGO_torso_filtering)"/>
     </include>
 
 
