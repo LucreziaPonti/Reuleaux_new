@@ -349,10 +349,10 @@ visualization_msgs::InteractiveMarkerControl& AddWayPoint::makeArrowControlDetai
   visualization_msgs::InteractiveMarkerControl control_view_details;
   control_view_details.always_visible = true;
   //*************rotate and move around the x-axis********************
-  //control_view_details.orientation.w = 1;
-  //control_view_details.orientation.x = 1;
-  //control_view_details.orientation.y = 0;
-  //control_view_details.orientation.z = 0;
+  ////control_view_details.orientation.w = 1;
+  ////control_view_details.orientation.x = 1;
+  ////control_view_details.orientation.y = 0;
+  ////control_view_details.orientation.z = 0;
   tf::Quaternion q_x(1, 0, 0,1); // (x, y, z,w)
   q_x.normalize();
   control_view_details.orientation.x = q_x.x();
@@ -370,10 +370,10 @@ visualization_msgs::InteractiveMarkerControl& AddWayPoint::makeArrowControlDetai
   //*****************************************************************
 
   //*************rotate and move around the z-axis********************
-  //control_view_details.orientation.w = 1;
-  //control_view_details.orientation.x = 0;
-  //control_view_details.orientation.y = 1;
-  //control_view_details.orientation.z = 0;
+  ////control_view_details.orientation.w = 1;
+  ////control_view_details.orientation.x = 0;
+  ////control_view_details.orientation.y = 1;
+  ////control_view_details.orientation.z = 0;
   tf::Quaternion q_z(0, 1, 0,1); // (x, y, z,w)  
   q_z.normalize();
   control_view_details.orientation.x = q_z.x();
@@ -391,10 +391,10 @@ visualization_msgs::InteractiveMarkerControl& AddWayPoint::makeArrowControlDetai
   //*****************************************************************
 
   //*************rotate and move around the y-axis********************
-  //control_view_details.orientation.w = 1;
-  //control_view_details.orientation.x = 0;
-  //control_view_details.orientation.y = 0;
-  //control_view_details.orientation.z = 1;
+  ////control_view_details.orientation.w = 1;
+  ////control_view_details.orientation.x = 0;
+  ////control_view_details.orientation.y = 0;
+  ////control_view_details.orientation.z = 1;
   tf::Quaternion q_y(0, 0, 1,1); // (x, y, z,w)
   q_y.normalize();
   control_view_details.orientation.x = q_y.x();
@@ -576,10 +576,10 @@ visualization_msgs::InteractiveMarkerControl& AddWayPoint::makeInteractiveMarker
   visualization_msgs::InteractiveMarkerControl control_inter_arrow;
   control_inter_arrow.always_visible = true;
   //*************rotate and move around the x-axis********************
-  //control_inter_arrow.orientation.w = 1;
-  //control_inter_arrow.orientation.x = 1;
-  //control_inter_arrow.orientation.y = 0;
-  //control_inter_arrow.orientation.z = 0;
+  ////control_inter_arrow.orientation.w = 1;
+  ////control_inter_arrow.orientation.x = 1;
+  ////control_inter_arrow.orientation.y = 0;
+  ////control_inter_arrow.orientation.z = 0;
   tf::Quaternion q_x(1, 0, 0,1); // (x, y, z,w)
   q_x.normalize();
   control_inter_arrow.orientation.x = q_x.x();
@@ -597,10 +597,10 @@ visualization_msgs::InteractiveMarkerControl& AddWayPoint::makeInteractiveMarker
   //*****************************************************************
 
   //*************rotate and move around the z-axis********************
-  //control_inter_arrow.orientation.w = 1;
-  //control_inter_arrow.orientation.x = 0;
-  //control_inter_arrow.orientation.y = 1;
-  //control_inter_arrow.orientation.z = 0;
+  ////control_inter_arrow.orientation.w = 1;
+  ////control_inter_arrow.orientation.x = 0;
+  ////control_inter_arrow.orientation.y = 1;
+  ////control_inter_arrow.orientation.z = 0;
   tf::Quaternion q_z(0, 1, 0,1); // (x, y, z,w) 
   q_z.normalize();
   control_inter_arrow.orientation.x = q_z.x();
@@ -618,10 +618,10 @@ visualization_msgs::InteractiveMarkerControl& AddWayPoint::makeInteractiveMarker
   //*****************************************************************
 
   //*************rotate and move around the y-axis********************
-  //control_inter_arrow.orientation.w = 1;
-  //control_inter_arrow.orientation.x = 0;
-  //control_inter_arrow.orientation.y = 0;
-  //control_inter_arrow.orientation.z = 1;
+  ////control_inter_arrow.orientation.w = 1;
+  ////control_inter_arrow.orientation.x = 0;
+  ////control_inter_arrow.orientation.y = 0;
+  ////control_inter_arrow.orientation.z = 1;
   tf::Quaternion q_y(0, 0, 1,1); // (x, y, z,w)
   q_y.normalize();
   control_inter_arrow.orientation.x = q_y.x();
@@ -755,7 +755,7 @@ void AddWayPoint::getRobotModelFrame_slot(const tf::Transform end_effector)
      the RQT Widget.
   */
 
-  //target_frame_.assign("odom"); // assigned at initializing
+  ////target_frame_.assign("odom"); // assigned at initializing
 
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
 

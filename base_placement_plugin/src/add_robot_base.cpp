@@ -74,7 +74,7 @@ void AddRobotBase::init()
   trns.setRotation(quat);
 
   box_pos = trns;
-  //target_frame_.assign("odom"); // new generalized assign
+  ////target_frame_.assign("odom"); // new generalized assign
   ros::NodeHandle nh;
   std::string BPP_fixed_frame;
   while(BPP_fixed_frame.empty()){
@@ -563,7 +563,7 @@ void AddRobotBase::clearAllPointsRviz()
 
 void AddRobotBase::getRobotModelFrame_slot(const tf::Transform end_effector)
 {
-  //target_frame_.assign("odom"); //assigned at init
+  ////target_frame_.assign("odom"); //assigned at init
   ROS_INFO_STREAM("The robot model frame is: " << target_frame_);
   box_pos = end_effector;
   clearAllPointsRviz();

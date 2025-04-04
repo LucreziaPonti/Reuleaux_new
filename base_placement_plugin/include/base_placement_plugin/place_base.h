@@ -24,7 +24,7 @@
 #include<moveit/robot_state/robot_state.h>
 
 #include<base_placement_plugin/add_robot_base.h>
-
+#include <map_creator/sphere_discretization.h>
 
 #include <QObject>
 #include <QTimer>
@@ -58,10 +58,13 @@ public:
   void init();
 
 private:
+  ros::NodeHandle nh_;
   std::string fixed_frame_;
   std::string robot_root_link_name_;
   std::string arm_base_link_name_;
   std::string arm_root_link_name_;
+  Eigen::Affine3d transform_arm_to_root_;
+  boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
 
 public Q_SLOTS:
   //!Getting the reachability data from widget
@@ -166,10 +169,10 @@ protected:
 
 
   //Transforming reachability data towards robot base
-  void transformToRobotbase(std::multimap< std::vector< double >, std::vector< double > > armBasePoses,
+  void transformToRobotbase(std::multimap< std::vector< double >, std::vector< double > > armBasePoses,  const Eigen::Affine3d arm_to_root,
                             std::multimap< std::vector< double >, std::vector< double > >& robotBasePoses);
 
-  void transformFromRobotbaseToArmBase(const geometry_msgs::Pose& base_pose, geometry_msgs::Pose &arm_base_pose);
+  void transformFromRobotbaseToArmBase(const geometry_msgs::Pose& base_pose,  const Eigen::Affine3d root_to_arm,  geometry_msgs::Pose &arm_base_pose);
   void createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses,
                      std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp, bool reduce_D);
 
@@ -232,6 +235,8 @@ protected:
 
   //Pointer for robot marker
   CreateMarker* mark_;
+
+  sphere_discretization::SphereDiscretization* sd_;
 };
 
 #endif  // PLACE_BASE_H_

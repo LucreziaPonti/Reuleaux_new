@@ -663,10 +663,8 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
   // Get bounding box for checking search validity
   double min_x, min_y, min_z, max_x, max_y, max_z;
   octree.getBoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
+  ROS_DEBUG("associatePoses: BOUNDING BOX x:[ %f : %f] , y:[ %f : %f] , z:[ %f : %f]", min_x, max_x, min_y, max_y, min_z, max_z);
 
-  ROS_DEBUG("X Min: %f Max: %f", min_x, max_x);
-  ROS_DEBUG("Y Min: %f Max: %f", min_y, max_y);
-  ROS_DEBUG("Z Min: %f Max: %f", min_z, max_z);
 
   // add all base poses from cloud to an octree
   for (int i = 0; i < spCenter.size(); i++)
@@ -691,17 +689,14 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
       octree.voxelSearch(searchPoint, pointIdxVec);
     }
     
-    if (pointIdxVec.size() > 0)
-    {
+      if (pointIdxVec.size() > 0){
       std::vector< double > voxel_pos;
       voxel_pos.reserve(3);
       voxel_pos.push_back(searchPoint.x);
       voxel_pos.push_back(searchPoint.y);
       voxel_pos.push_back(searchPoint.z);
 
-      // For a given voxel, add all base poses to the multimap for later retreival
-      for (size_t j = 0; j < pointIdxVec.size(); ++j)
-      {
+        for (size_t j = 0; j < pointIdxVec.size(); ++j){ // For a given voxel, add all base poses to the multimap for later retreival
         // Get the base pose for a given index found in a voxel
         std::vector< double > base_pose;
         base_pose.reserve(3);

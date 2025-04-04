@@ -16,7 +16,7 @@
 #include <ros/ros.h>
 
 #include <map_creator/WorkSpace.h>
-#include <map_creator/sphere_discretization.h>
+////#include <map_creator/sphere_discretization.h>
 #include <map_creator/kinematics.h>
 
 #include <tf2/LinearMath/Transform.h>
@@ -40,11 +40,11 @@ PlaceBase::~PlaceBase()
 
 void PlaceBase::init()
 {
-  ros::NodeHandle nh;
+  ///ros::NodeHandle nh;
   std::string BPP_fixed_frame;
   while(BPP_fixed_frame.empty()){
     ROS_DEBUG("PB - Attempting to get param 'BPP_fixed_frame'");
-    if (nh.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
+    if (nh_.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
         ROS_DEBUG("PB - Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
         fixed_frame_.assign(BPP_fixed_frame);
     } else {
@@ -213,10 +213,9 @@ void PlaceBase::setBasePlaceParams(int base_loc_size, int high_score_sp)
 void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses, /*baseTrnsCol*/
                    std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp, bool reduce_D)
 {
-  //OLDFILTER//ros::NodeHandle nn;
+  //OLDFILTER//////ros::NodeHandle nn;
   kinematics::Kinematics k;
   std::vector<int> poseCount;
-  ROS_INFO("begin creating UNION MAP -- may take some time");
   poseCount.reserve(basePoses.size());
   for (std::multimap< std::vector< double >, std::vector< double > >::iterator it = basePoses.begin(); it != basePoses.end();++it)
   {
@@ -241,11 +240,11 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
         prob_base_pose.orientation.w = 1.0;
         
         //OLDFILTER//////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE *****REMOVE****
-        //OLDFILTER//FilterCollisionPoses filter;
-        //OLDFILTER//if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, false)){ 
+        //OLDFILTER////FilterCollisionPoses filter;
+        //OLDFILTER////if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, false)){ 
           ///////true = NOT IN COLLISION with any collision object of the planning scene -- acceptable base pos
           geometry_msgs::Pose base_pose_at_arm;
-          transformFromRobotbaseToArmBase(prob_base_pose, base_pose_at_arm);
+          transformFromRobotbaseToArmBase(prob_base_pose,transform_arm_to_root_.inverse(), base_pose_at_arm);
           int num_of_solns = 0;
           for(int j=0;j<GRASP_POSES_.size();j++)
           {
@@ -258,7 +257,7 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
           float d = (float(num_of_solns)/float(GRASP_POSES_.size()*8))*100;
           spColor.insert(std::pair< std::vector< double >, double >(it->first, double(d)));
           //// stores it in the union map associating score and pose
-        //OLDFILTER//}
+        //OLDFILTER/////}
       }
      }
   }
@@ -266,10 +265,10 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
   //Determining color of spheres of 3d map
     for(std::multimap<std::vector<double>, std::vector<double> >::iterator it = basePoses.begin(); it!=basePoses.end();++it)
     {
-      geometry_msgs::Pose prob_base_pose;
-      prob_base_pose.position.x = (it->first)[0];
-      prob_base_pose.position.y = (it->first)[1];
-      prob_base_pose.position.z = (it->first)[2];
+      /////OLDFILTER//geometry_msgs::Pose prob_base_pose;
+      //OLDFILTER//prob_base_pose.position.x = (it->first)[0];
+      //OLDFILTER//prob_base_pose.position.y = (it->first)[1];
+      //OLDFILTER//prob_base_pose.position.z = (it->first)[2];
       //OLDFILTER//////////FILTERING POSES TO AVOID COLLISION WITH OBJECTS IN THE SCENE AND SATISFY ROBOT CONSTRAINTS (for tiago=torso's height)
       //OLDFILTER//FilterCollisionPoses filter;
       //OLDFILTER//if(filter.check_collision_objects(nn, prob_base_pose.position.x, prob_base_pose.position.y, prob_base_pose.position.z, true)){ 
@@ -278,7 +277,7 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
         if(d>1){
           spColor.insert(std::pair< std::vector< double >, double >(it->first, double(d)));
         }
-      //OLDFILTER//}
+      /////OLDFILTER//}
     }
   }
 
@@ -291,7 +290,6 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
  {
    highScoredSp.push_back(it->second); // ordered structure containing only the sphere poses ORDERED BY SCORE (high to low)
  }
-  ROS_INFO("finished creating UNION MAP");
 }
 
 
@@ -301,8 +299,8 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
   float total_score = 0;
   float max_score = 0;
   
-  ros::NodeHandle n;
-  ros::Publisher bp_pub = n.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
+  ////ros::NodeHandle n;
+  ros::Publisher bp_pub = nh_.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
   ros::Duration(1).sleep();
   reule_aux::BP_Res bp_res;
 
@@ -310,7 +308,7 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
   geometry_msgs::Pose best_pose;
   for(int i=0;i<base_poses.size();i++){
     geometry_msgs::Pose base_pose_at_arm;
-    transformFromRobotbaseToArmBase(base_poses[i], base_pose_at_arm);
+    transformFromRobotbaseToArmBase(base_poses[i],transform_arm_to_root_.inverse(), base_pose_at_arm);
     ROS_DEBUG("trasform base pose %d to arm pose",i);
     int num_of_solns = 0;
     for(int j=0;j<grasp_poses.size();j++){
@@ -363,8 +361,8 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
   float total_score = 0;
   float max_score = 0;
 
-  ros::NodeHandle n;
-  ros::Publisher bp_pub = n.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
+  /////ros::NodeHandle n;
+  ros::Publisher bp_pub = nh_.advertise<reule_aux::BP_Res>("reule_aux/bp_results", 1000);
   reule_aux::BP_Res bp_res;
   ros::Duration(2).sleep();
   geometry_msgs::Pose best_pose;
@@ -412,67 +410,42 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
   return score;
 }
 
-void PlaceBase::transformFromRobotbaseToArmBase(const geometry_msgs::Pose& base_pose, geometry_msgs::Pose &arm_base_pose)
-{
-    
-  //// !!!!!! need the robot root frame to be coinciding to the global fixed frame
-  const Eigen::Affine3d trans_to_arm_parent = robot_state_->getGlobalLinkTransform(arm_root_link_name_);
+void PlaceBase::transformFromRobotbaseToArmBase(const geometry_msgs::Pose& base_pose, const Eigen::Affine3d root_to_arm, geometry_msgs::Pose &arm_base_pose){
+  //ROS_INFO("TRANSFORMFromROBOTBASEtoARM - robot base pose: %f %f %f %f %f %f %f",base_pose.position.x,base_pose.position.y,base_pose.position.z,base_pose.orientation.x,base_pose.orientation.y,base_pose.orientation.z,base_pose.orientation.w);
   Eigen::Affine3d base_pose_tf; //Affine3d is a Pose type message(contains a Vector 3d and Quaterniond/RotationMatrix). 
-  
-  ////change the pose info of the base pose computed into a tf
   tf::poseMsgToEigen(base_pose, base_pose_tf);
-  ////finds the "new"position of the first link of the arm if the global frame=base frame corresponds to the base pose
-  tf::poseEigenToMsg( base_pose_tf * trans_to_arm_parent  , arm_base_pose);
-  //return the pose of the first link of the arm (for the first three solving methods)
+  tf::poseEigenToMsg(base_pose_tf * root_to_arm, arm_base_pose);
+  //ROS_INFO("TRANSFORMFromROBOTBASEtoARM - transformed arm base pose: %f %f %f %f %f %f %f",arm_base_pose.position.x,arm_base_pose.position.y,arm_base_pose.position.z,arm_base_pose.orientation.x,arm_base_pose.orientation.y,arm_base_pose.orientation.z,arm_base_pose.orientation.w);
 }
 
 //function transforms the inverse reachability data to the base of the whole robot model
-void PlaceBase::transformToRobotbase(std::multimap< std::vector< double >, std::vector< double > > armBasePoses,
-                          std::multimap< std::vector< double >, std::vector< double > >& robotBasePoses)
-{
-  
-  const Eigen::Affine3d trans_to_root = robot_state_->getGlobalLinkTransform(robot_root_link_name_);
-  const Eigen::Affine3d trans_to_arm = robot_state_->getGlobalLinkTransform(arm_base_link_name_);
+void PlaceBase::transformToRobotbase(std::multimap< std::vector< double >, std::vector< double > > armBasePoses, const Eigen::Affine3d arm_to_root,
+                          std::multimap< std::vector< double >, std::vector< double > >& robotBasePoses){
 
-  geometry_msgs::Pose arm_pose;
-  tf::poseEigenToMsg(trans_to_arm, arm_pose);
-  ROS_DEBUG("TRANSFORMTOROBOTBASE - global transform arm_1_link: %f %f %f %f %f %f %f",arm_pose.position.x,arm_pose.position.y,arm_pose.position.z,arm_pose.orientation.x,arm_pose.orientation.y,arm_pose.orientation.z,arm_pose.orientation.w);
-  geometry_msgs::Pose root_pose;
-  tf::poseEigenToMsg(trans_to_root, root_pose);
-  ROS_DEBUG("TRANSFORMTOROBOTBASE - global transform root: %f %f %f %f %f %f %f",root_pose.position.x,root_pose.position.y,root_pose.position.z,root_pose.orientation.x,root_pose.orientation.y,root_pose.orientation.z,root_pose.orientation.w);
-
-  ////inverse - !!!! we need that root and global frames correspond
-  const Eigen::Affine3d arm_to_root = trans_to_arm.inverse()*trans_to_root; // arm T root = arm T world * world T root
-  ////maybe here we should use trans_to_root if we don't want this correspondence 
-  geometry_msgs::Pose arm_root_pose;
-  tf::poseEigenToMsg(arm_to_root, arm_root_pose);
-  ROS_DEBUG("TRANSFORMTOROBOTBASE - arm to root: %f %f %f %f %f %f %f",arm_root_pose.position.x,arm_root_pose.position.y,arm_root_pose.position.z,arm_root_pose.orientation.x,arm_root_pose.orientation.y,arm_root_pose.orientation.z,arm_root_pose.orientation.w);
-
-  sphere_discretization::SphereDiscretization sd;
   for (std::multimap< std::vector< double >, std::vector< double > >::iterator it = armBasePoses.begin(); it != armBasePoses.end();++it)
   {
     geometry_msgs::Pose arm_base_pose;
     ////save the pose of this iteration into arm_base_pose
-    sd.convertVectorToPose(it->second, arm_base_pose);
+    sd_->convertVectorToPose(it->second, arm_base_pose);
     Eigen::Affine3d arm_base_tf;
     ////convert into an Affine3d tf
     tf::poseMsgToEigen(arm_base_pose, arm_base_tf);
     geometry_msgs::Pose robot_base_pose;
     ////compute position of the robot base given the position of the first link of the arm
-    tf::poseEigenToMsg(arm_to_root*arm_base_tf , robot_base_pose);
+    tf::poseEigenToMsg(arm_base_tf*arm_to_root, robot_base_pose);
     ////convert to have the correct data format of the global tranform to computed robot base
     static const int arr[] = {1,1,1};
     std::vector<double> base_vec (arr, arr + sizeof(arr) / sizeof(arr[0]) );
     std::vector<double> base_pose;
-    sd.convertPoseToVector(robot_base_pose, base_pose);
+    sd_->convertPoseToVector(robot_base_pose, base_pose);
     robotBasePoses.insert(std::pair< std::vector< double >, std::vector< double > >(base_vec,base_pose));
 
   }
 }
 
 void PlaceBase::reset_BP_result_node(){
-  ros::NodeHandle nh;
-  ros::ServiceClient client = nh.serviceClient<std_srvs::Trigger>("move_to_bp_result/reset"); 
+  ////ros::NodeHandle nh;
+  ros::ServiceClient client = nh_.serviceClient<std_srvs::Trigger>("move_to_bp_result/reset"); 
   std_srvs::Trigger srv;
   if (client.call(srv)){
     if (srv.response.success){
@@ -500,32 +473,56 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
     SO baseTrnsCol contains all the poses (voxel_pose,base_pose), highScoreSp contains all the Spheres ordered by score
   */
 
+/*////////////*/std::chrono::high_resolution_clock::time_point start_findBase = std::chrono::high_resolution_clock::now(); 
   Q_EMIT basePlacementProcessStarted();
   score_ = 0;
   
-  // added checks to make sure everything is loaded 
+  //reset robot markers for the result visualization
+  imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
+  ros::Duration(0.1).sleep();
+  imServer->applyChanges();
+
+  // added checks to make sure everything is loaded (robot model and planning group of the manipulator)
   checkforRobotModel();
   if(selected_group_.empty()){
-    ROS_WARN("no planning group selected - setting to default 'arm' - restart if needed");
-    selected_group_="arm";
-    ROS_INFO("////////create mark");
+    selected_group_=group_names_[0];
+    ROS_WARN("no planning group selected - setting to default '%s' - restart if needed",selected_group_.c_str());
     mark_ = new CreateMarker(selected_group_);
   }
 
+  // update robot state to the actual configuration the robot is in at the moment
   robot_state_ = std::make_shared<moveit::core::RobotState>(robot_model_);
   std::vector<double> joint_soln_empty;
   mark_->updateRobotState(joint_soln_empty, robot_state_, false);
 
-  //extra global vars useful for the BP_RESULTS
+  //extra global vars useful for the BP_RESULTS (names of important frames and transforms)
   robot_root_link_name_ = robot_model_->getRootLinkName();
+
   const moveit::core::JointModelGroup* arm_jmp = robot_model_->getJointModelGroup(selected_group_);
   const std::vector<std::string>& arm_link_names = arm_jmp->getLinkModelNames();
   arm_base_link_name_ = arm_link_names[0];
+
   std::vector<std::string> full_link_names = robot_model_->getLinkModelNames();
   int position = std::find(full_link_names.begin(), full_link_names.end(), arm_base_link_name_) -full_link_names.begin() ;
-  arm_root_link_name_ = full_link_names[position-1];
+  arm_root_link_name_ = full_link_names[position-1]; // "arm_root" in how I call the parent frame of the manipulator of the robot... it may correspond to the robot_root
 
-  reset_BP_result_node();
+  //compute the transformation between the robot_root frame and the arm_root_frame 
+  const Eigen::Affine3d trans_to_root = robot_state_->getGlobalLinkTransform(robot_root_link_name_);
+  const Eigen::Affine3d trans_to_arm = robot_state_->getGlobalLinkTransform(arm_root_link_name_); 
+  transform_arm_to_root_ = trans_to_arm.inverse()*trans_to_root;// arm T root = arm T world * world T root   
+  /* // debug the transforms values
+  geometry_msgs::Pose arm_pose;
+  tf::poseEigenToMsg(trans_to_arm, arm_pose);
+  ROS_INFO("TRANSFORMFromROBOTBASEtoARM - global transform arm_1_link: %f %f %f %f %f %f %f",arm_pose.position.x,arm_pose.position.y,arm_pose.position.z,arm_pose.orientation.x,arm_pose.orientation.y,arm_pose.orientation.z,arm_pose.orientation.w);
+  geometry_msgs::Pose root_pose;
+  tf::poseEigenToMsg(trans_to_root, root_pose);
+  ROS_INFO("TRANSFORMFromROBOTBASEtoARM - global transform root: %f %f %f %f %f %f %f",root_pose.position.x,root_pose.position.y,root_pose.position.z,root_pose.orientation.x,root_pose.orientation.y,root_pose.orientation.z,root_pose.orientation.w);
+  geometry_msgs::Pose arm_root_pose;
+  tf::poseEigenToMsg(transform_arm_to_root_, arm_root_pose);
+  ROS_INFO("TRANSFORMFromROBOTBASEtoARM - transform arm_to_root: %f %f %f %f %f %f %f",arm_root_pose.position.x,arm_root_pose.position.y,arm_root_pose.position.z,arm_root_pose.orientation.x,arm_root_pose.orientation.y,arm_root_pose.orientation.z,arm_root_pose.orientation.w);
+  */
+
+  reset_BP_result_node(); // to prepare the node move_to_bp_result to receive new values
 
 
   if (grasp_poses.size() == 0)
@@ -538,31 +535,17 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
     BasePlaceMethodHandler(); 
     // Here depending on the method is done the evaluation of the poses and the score is calculated
     // once the poses are found and the score is calculated the results are also published on the topic reule_aux/bp_results
-    /* OLD FOR CYCLE THAT PRINTED THE RESULTS - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
-      for (int i = 0; i < final_base_poses.size(); ++i)
-      {
-        //Transforming the poses, as all are pointing towards
-
-        tf2::Quaternion quat(final_base_poses[i].orientation.x, final_base_poses[i].orientation.y,
-                            final_base_poses[i].orientation.z, final_base_poses[i].orientation.w);
-        tf2::Matrix3x3 m(quat);
-
-        double roll, pitch, yaw;
-        m.getRPY(roll, pitch, yaw);
-        ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1, final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll, pitch, yaw);
-      }
-    */
-
     ROS_INFO("Computation done. Start visualization");
     OuputputVizHandler(final_base_poses);
 
-
   }else  {
 
-    if (PoseColFilter.size() == 0)    {
+    if (PoseColFilter.size() == 0){
       ROS_WARN("No Inverse Reachability Map found. Please provide an Inverse Reachability map.");
     }    else    {
-      sphere_discretization::SphereDiscretization sd;
+      ////sphere_discretization::SphereDiscretization sd;
+      sd_ = new sphere_discretization::SphereDiscretization();
+  
       baseTrnsCol.clear();
       sphereColor.clear();
       highScoreSp.clear();
@@ -571,16 +554,15 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
 
       final_base_poses.clear();
       GRASP_POSES_ = grasp_poses;
-
-      if(selected_method_ == 3) {// findBaseByVerticalRobotModel - extends the computation from the arm base to the base of the entire robot
-        transformToRobotbase(PoseColFilter, robot_PoseColfilter); // transforms IRM so that it contains robot base poses instead of arm base
-        sd.associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res); //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
+      ROS_INFO("//////////////////////// START UNION MAP CREATION ////////////////////////");
+      if(selected_method_ == 3) {// findBaseByVerticalRobotModel 
+        transformToRobotbase(PoseColFilter, transform_arm_to_root_, robot_PoseColfilter); // transforms IRM so that it contains robot base poses instead of arm base
+        sd_->associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res); //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
         ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
         createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
       }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
-        ROS_INFO("//////////////////////// START UNION MAP CREATION ////////////////////////");
         /*////////////*/std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now(); 
-        sd.associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res);
+        sd_->associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res);
         /*////////////*/std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); 
         /*////////////*/std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); 
         /*////////////*/ROS_INFO("Time for AssociatePose: %ld ms", AP.count());  
@@ -601,7 +583,7 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       ROS_INFO("Start of computation of the base placement");
       BasePlaceMethodHandler(); // depending on the method the poses are found (and stored in final_base_poses) and they are published on reule_aux/bp_results
       
-      /* OLD FOR CYCLE THAT PRINTED THE RESULTS - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
+        /* ///////OLD FOR CYCLE THAT PRINTED THE RESULTS - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
         for (int i = 0; i < final_base_poses.size(); ++i)
         {
           //Transforming the poses, as all are pointing towards
@@ -620,7 +602,8 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       OuputputVizHandler(final_base_poses);  // function to have different showBaseLocations methods
     }
   }
-  /* OLD PRINT OF THE BEST POSE - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
+  }
+  /* ///////OLD PRINT OF THE BEST POSE - NOT NEEDED ANYMORE - DONE DIRECTLY DURING WHEN THE SCORE IS CALCULATED
     tf2::Quaternion quat(best_pose_.orientation.x, best_pose_.orientation.y, best_pose_.orientation.z, best_pose_.orientation.w);
     tf2::Matrix3x3 m(quat);
     double roll, pitch, yaw;
@@ -634,6 +617,10 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
 
   Q_EMIT basePlacementProcessFinished();
   ROS_INFO("FindBase Task Finished");
+  /*////////////*/std::chrono::high_resolution_clock::time_point finish_findBase = std::chrono::high_resolution_clock::now(); 
+  /*////////////*/std::chrono::milliseconds findBase = std::chrono::duration_cast<std::chrono::milliseconds>(finish_findBase - start_findBase); 
+  /*////////////*/ROS_INFO("Time for FindBase: %ld ms", findBase.count());  
+
 }
 
 void PlaceBase::BasePlaceMethodHandler()
@@ -747,7 +734,7 @@ void PlaceBase::findBaseByPCA()
    * orientations from all the poses correspond to that sphere. One pose from one sphere.
   */
   ROS_INFO("Finding optimal base pose by PCA.");
-  sphere_discretization::SphereDiscretization sd;
+  //sphere_discretization::SphereDiscretization sd;
   std::vector<geometry_msgs::Pose> pose_scores;
   map_creator::WorkSpace ws;
   for (int i = 0; i < BASE_LOC_SIZE_; ++i)
@@ -765,7 +752,7 @@ void PlaceBase::findBaseByPCA()
     for (it = baseTrnsCol.lower_bound(basePose); it != baseTrnsCol.upper_bound(basePose); ++it)
     {
       geometry_msgs::Pose pp;
-      sd.convertVectorToPose(it->second, pp);
+      sd_->convertVectorToPose(it->second, pp);
       wss.poses.push_back(pp);
     }
     ws.WsSpheres.push_back(wss);
@@ -776,7 +763,7 @@ void PlaceBase::findBaseByPCA()
   {
     geometry_msgs::Pose final_base_pose;
     
-    sd.findOptimalPosebyPCA(ws.WsSpheres[i].poses, final_base_pose);  // Calling the PCA..After the normalization the results seem suitable
+    sd_->findOptimalPosebyPCA(ws.WsSpheres[i].poses, final_base_pose);  // Calling the PCA..After the normalization the results seem suitable
     final_base_pose.position.x = ws.WsSpheres[i].point.x;
     final_base_pose.position.y = ws.WsSpheres[i].point.y;
     final_base_pose.position.z = ws.WsSpheres[i].point.z;
@@ -808,7 +795,7 @@ void PlaceBase::findBaseByGraspReachabilityScore()
 
   */
   ROS_INFO("Finding optimal base pose by GraspReachabilityScore.");
-  sphere_discretization::SphereDiscretization sd;
+  //sphere_discretization::SphereDiscretization sd;
   kinematics::Kinematics kin;
   std::vector<geometry_msgs::Pose> pose_scores;
   int numofSp = BASE_LOC_SIZE_;
@@ -820,7 +807,7 @@ void PlaceBase::findBaseByGraspReachabilityScore()
     for(it = baseTrnsCol.lower_bound(highScoreSp[i]); it != baseTrnsCol.upper_bound(highScoreSp[i]); ++it)
     {
       geometry_msgs::Pose pp;
-      sd.convertVectorToPose(it->second, pp);
+      sd_->convertVectorToPose(it->second, pp);
       probBasePoses.push_back(pp);
              
     }
@@ -860,7 +847,7 @@ void PlaceBase::findBaseByIKSolutionScore()
 
   */
   ROS_INFO("Finding optimal base pose by IKSolutionScore.");
-  sphere_discretization::SphereDiscretization sd;
+  ////sphere_discretization::SphereDiscretization sd;
   kinematics::Kinematics kin;
   std::vector<geometry_msgs::Pose> pose_scores;
   int numofSp = BASE_LOC_SIZE_;
@@ -875,7 +862,7 @@ void PlaceBase::findBaseByIKSolutionScore()
     for(it = baseTrnsCol.lower_bound(highScoreSp[i]); it != baseTrnsCol.upper_bound(highScoreSp[i]); ++it)
     {
       geometry_msgs::Pose pp;
-      sd.convertVectorToPose(it->second, pp);
+      sd_->convertVectorToPose(it->second, pp);
       probBasePoses.push_back(pp);
        
     }
@@ -923,7 +910,6 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
     quat2.setRPY( 0, -M_PI/2,  0);
     tf2::Vector3 vec2(0, 0 , 0);
     tf2::Transform multiplier;
-      //multiplier.setIdentity ();
     multiplier.setOrigin (vec2);
     multiplier.setRotation (quat2);
 
@@ -945,13 +931,13 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
     pose_arr.push_back(new_pose);
   }
 
-  ros::NodeHandle nh;
-  ros::Publisher marker_pub = nh.advertise< visualization_msgs::MarkerArray >("visualization_marker_array", 1);
+  ////ros::NodeHandle nh;
+  ros::Publisher marker_pub = nh_.advertise< visualization_msgs::MarkerArray >("visualization_marker_array", 1);
   visualization_msgs::MarkerArray markerArr;
   for (int i = 0; i < po.size(); ++i)
   {
     visualization_msgs::Marker marker;
-    //marker.header.frame_id = "odom";
+    ////marker.header.frame_id = "odom";
     marker.header.frame_id = fixed_frame_;
     marker.header.stamp = ros::Time::now();
     marker.ns = "points";
@@ -982,10 +968,10 @@ void PlaceBase::showBaseLocationsbyArmModel(std::vector< geometry_msgs::Pose > p
   ROS_INFO("Showing Base Locations by Arm Model:");
   kinematics::Kinematics k;
 
-  boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
-  imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
-  ros::Duration(0.1).sleep();
-  imServer->applyChanges();
+  ////boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
+  ////imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
+  ////ros::Duration(0.1).sleep();
+  ////imServer->applyChanges();
 
   std::vector<visualization_msgs::InteractiveMarker> iMarkers;
   BasePoseJoint base_pose_joints;
@@ -1007,7 +993,7 @@ void PlaceBase::showBaseLocationsbyArmModel(std::vector< geometry_msgs::Pose > p
     }
 
   imServer->applyChanges();
-  ros::Duration(25).sleep();
+  ////ros::Duration(25).sleep();
 }
 
 
@@ -1015,16 +1001,16 @@ void PlaceBase::showBaseLocationsbyRobotModel(std::vector<geometry_msgs::Pose> p
 {
   ROS_INFO("Showing Base Locations by Robot Model:");
   kinematics::Kinematics k;
-  boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
-  imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
-  ros::Duration(0.1).sleep();
-  imServer->applyChanges();
+  ////boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
+  ////imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
+  ////ros::Duration(0.1).sleep();
+  ////imServer->applyChanges();
   std::vector<visualization_msgs::InteractiveMarker> iMarkers;
   BasePoseJoint base_pose_joints;
   for(int i=0;i<po.size();i++)
   {
     geometry_msgs::Pose base_pose_at_arm;
-    transformFromRobotbaseToArmBase(po[i], base_pose_at_arm);
+    transformFromRobotbaseToArmBase(po[i], transform_arm_to_root_.inverse(), base_pose_at_arm);
     for(int j=0;j<GRASP_POSES_.size();j++)
     {
       std::vector<double> joint_soln;
@@ -1042,7 +1028,7 @@ void PlaceBase::showBaseLocationsbyRobotModel(std::vector<geometry_msgs::Pose> p
     }
 
   imServer->applyChanges();
-  ros::Duration(25).sleep();
+  ////ros::Duration(25).sleep();
 }
 
 
@@ -1072,11 +1058,11 @@ void PlaceBase::ShowUnionMap(bool show_map)
     ROS_INFO("The union map has not been created yet. Please create the Union map by the Find Base button");
   else
   {
-    ros::NodeHandle n;
-    ros::Publisher workspace_pub = n.advertise< map_creator::WorkSpace >("reachability_map", 1);
+    ////ros::NodeHandle n;
+    ros::Publisher workspace_pub = nh_.advertise< map_creator::WorkSpace >("reachability_map", 1);
     map_creator::WorkSpace ws;
     ws.header.stamp = ros::Time::now();
-    //ws.header.frame_id = "odom";
+    /////ws.header.frame_id = "odom";
     ws.header.frame_id = fixed_frame_;
     ws.resolution = res;
     ROS_DEBUG(" loading spheres");

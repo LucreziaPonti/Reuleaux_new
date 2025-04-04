@@ -647,8 +647,11 @@ void BasePlacementWidget::PlaceBaseFinishedHandler()
 void BasePlacementWidget::PlaceBaseCompleted_slot(double score)
 {
   /* A message showing task has completed */
-
-  ui_.lbl_placeBaseCompleted->setText("COMPLETED. Score: " + QString::number(score));
+  if(score==-1){
+    ui_.lbl_placeBaseCompleted->setText("FAILED. Score: " + QString::number(score));
+  }else{
+    ui_.lbl_placeBaseCompleted->setText("COMPLETED. Score: " + QString::number(score));
+  }
 }
 
 void BasePlacementWidget::loadReachabilityFile()

@@ -12,10 +12,10 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
 {
   spinner.start();
   group_.reset(new MoveGroupInterface(group_name_));
-  //ROS_INFO_STREAM("Selected planning group: "<< group_->getName());
+  ////ROS_INFO_STREAM("Selected planning group: "<< group_->getName());
   robot_model_ = group_->getRobotModel();
 
-/* // VERS 1 of updateRobotState - not in use
+/* ///// VERS 1 of updateRobotState - not in use
 
   // Crea un buffer TF2 e un listener
   auto tf_buffer = std::make_shared<tf2_ros::Buffer>();
@@ -84,7 +84,7 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
 {
   if(!arm_only){
 
-  /* //VERS 1 for robot state update - using planning scene monitor - gave issues
+  /* ////VERS 1 for robot state update - using planning scene monitor - gave issues
     if(!planning_scene_monitor_){
       ROS_ERROR("Planning scene not configured");
       return;
@@ -127,14 +127,14 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
     }
   */
     
-    // VERS 2 using joint state
+    //// VERS 2 using joint state
     // GET THE VALUES OF THE JOINTS FROM THE JOINT STATE PUBLISHER
     sensor_msgs::JointState empty_state;
     joint_state_update_ = empty_state;
     joint_state_sub_ = nh.subscribe("/joint_states", 1, &CreateMarker::jointStateCallback, this);
     while (joint_state_update_.name.size() == 0){
       ROS_DEBUG("Waiting for joint state update"); /////////////////////
-      ros::Duration(0.5).sleep();
+      ros::Duration(0.1).sleep();
     } 
     joint_state_sub_.shutdown();
     //check joint state received:
@@ -241,7 +241,7 @@ void CreateMarker::updateMarkers(const geometry_msgs::Pose& base_pose, bool is_r
   double b = unifRand();
   for(std::size_t j=0;j<markers.markers.size();j++)
   {
-    //markers.markers[j].header.frame_id = "odom";
+    ////markers.markers[j].header.frame_id = "odom";
     markers.markers[j].header.frame_id = fixed_frame_;
     markers.markers[j].type = markers.markers[j].type;
     if(markers.markers[j].type == visualization_msgs::Marker::MESH_RESOURCE){
@@ -308,7 +308,7 @@ void CreateMarker::makeIntMarkerControl(const geometry_msgs::Pose& base_pose, co
 void CreateMarker::createInteractiveMarker(const geometry_msgs::Pose& base_pose, const std::vector<double>& joint_soln,
                                            const int& num, bool arm_only, bool is_reachable,visualization_msgs::InteractiveMarker& iMarker)
 {
-  //iMarker.header.frame_id = "odom";
+  ////iMarker.header.frame_id = "odom";
   iMarker.header.frame_id = fixed_frame_;
   iMarker.pose = base_pose;
   iMarker.scale = 0.3;
