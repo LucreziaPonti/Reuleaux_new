@@ -52,15 +52,11 @@ void AddWayPoint::onInitialize()
        Inter Object connections for communications between the classes.
    */
   ros::NodeHandle nh;
-  std::string BPP_fixed_frame;
-  while(BPP_fixed_frame.empty()){
-    ROS_INFO("Attempting to get param 'BPP_fixed_frame'");
-    if (nh.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
-        ROS_INFO("Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
-        target_frame_.assign(BPP_fixed_frame);
-    } else {
-        ROS_WARN("Failed to get param 'param_name'");
-    }
+  if (nh.getParam("BPP_fixed_frame", target_frame_)) {
+      ROS_INFO("Received fixed frame for plugin: %s", target_frame_.c_str());
+  } else {
+      ROS_WARN("Failed to get param 'param_name' - setting to defualt: 'world'");
+      target_frame_ = "world"; ////////////////
   }
 
   place_base = new PlaceBase();

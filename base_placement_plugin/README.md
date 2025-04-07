@@ -24,7 +24,7 @@ There are a few different options to use the plugin:
   - SAME OPTIONAL ARGUMENTS AS base_placement.launch  
 
 
-3. Manually setup the Rviz window:
+3. Manually setup the Rviz window - not suggested since the plugin requires multiple parameters, set at launch (in particular for the filtering):
   ```
   rosrun rviz rviz
   ```

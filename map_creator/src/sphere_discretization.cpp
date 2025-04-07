@@ -591,21 +591,28 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
 {
   // retreive the parameters to choose the type of filtering 
     ros::NodeHandle nh;  
-    nh.getParam("OGM2d_filtering", OGM2d_filt_);
-    nh.getParam("TIAGO_torso_filtering", TIAGO_torso_filt_);
+    if (!nh.getParam("OGM2d_filtering", OGM2d_filt_)) {
+        ROS_WARN("associatePose - Failed to get param 'OGM2_filt_' - setting to defualt: 'false'");
+        OGM2d_filt_ = false;
+    }
+    if (!nh.getParam("TIAGO_torso_filtering", TIAGO_torso_filt_)) { /////////////////
+      ROS_WARN("associatePose - Failed to get param 'TIAGO_torso_filt_' - setting to defualt: 'false'");
+      TIAGO_torso_filt_ = false;
+    }
+
     if(OGM2d_filt_){ // if I want to use a 2-dimentional Occupancy Grid Map I need these parameters
-      nh.getParam("cost_threshold",OGM2d_cost_lim_);
+      nh.getParam("OGM2d_cost_threshold",OGM2d_cost_lim_);
       nh.getParam("OGM2d_topic",OGM2d_topic_);
       OGM2d_rcvd_ = false;
-      OGM2d_sub_ = nh.subscribe(OGM2d_topic_, 1, &SphereDiscretization::OGM2d_CB, this);
+      OGM2d_sub_ = nh.subscribe(OGM2d_topic_, 10, &SphereDiscretization::OGM2d_CB, this);
       int wait=0;///////////
-      while(!OGM2d_rcvd_ && wait<10){///////////
-        ROS_INFO("waiting to receive occupancy grid map");
+      while(!OGM2d_rcvd_ && wait<100){///////////
+        ROS_INFO("waiting to receive occupancy grid map - %d", wait);
         wait+=1;
         ros::Duration(0.1).sleep();
         ros::spinOnce();
       }
-      if(wait==5){////////////review
+      if(wait==100){////////////review
         ROS_ERROR("TIMEDOUT ON WAITING FOR %s", OGM2d_topic_.c_str());
         return;
       }
@@ -619,6 +626,7 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
         arm_to_root_tf_.setRotation(tf2::Quaternion(eigen_quaternion.x(), eigen_quaternion.y(), eigen_quaternion.z(), eigen_quaternion.w()));
       }
     }
+
   unsigned char maxDepth = 16;
   float size_of_box = 2;
   ////SphereDiscretization sd();
@@ -680,15 +688,15 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
           if((new_trans_vec[2]>1.232||new_trans_vec[2]<0.89)){ //outside robot's fisical boundaries (torso_lift_link's height)
             continue;           
           }
-        //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
-        double tolerance = 0.3; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
-        tf2::Matrix3x3 rotation_matrix(new_trans_quat);
-        tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector
-        // Check if the z axis is close to vertical (0, 0, 1)
-        if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
-          //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);
-          continue;
-        }
+          //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
+          double tolerance = 0.2; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
+          tf2::Matrix3x3 rotation_matrix(new_trans_quat);
+          tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector
+          // Check if the z axis is close to vertical (0, 0, 1)
+          if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
+            //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);
+            continue;
+          }
         //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);
         }
       }
@@ -697,7 +705,19 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
         tf2::Vector3 check_trans_vec;
         if(arm_pose){ // i need to find the corresponding robot base pose to check the robot base pose against the costmap
           tf2::Transform robot_pose_trns;
-          robot_pose_trns = new_trns*arm_to_root_tf_;
+          if(TIAGO_torso_filt_){ // adjust orientation to vertical to make sure that the costmap check is correct for the robot tiago on the ground
+            tf2::Transform tiago_trns;
+            tiago_trns.setOrigin(new_trans_vec);
+            double roll, pitch, yaw;
+            tf2::Matrix3x3(new_trans_quat).getRPY(roll, pitch, yaw);
+            tf2::Quaternion q_new;
+            q_new.setRPY(0, 0, yaw);
+            q_new.normalize();
+            tiago_trns.setRotation(q_new);
+            robot_pose_trns = tiago_trns*arm_to_root_tf_;
+          }else{
+            robot_pose_trns = new_trns*arm_to_root_tf_;
+          }
           check_trans_vec = robot_pose_trns.getOrigin();
         }else{ // already is a robot root pose
           check_trans_vec = new_trans_vec;

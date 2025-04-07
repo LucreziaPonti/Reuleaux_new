@@ -32,15 +32,11 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
     planning_scene_monitor_->startStateMonitor();
 */
   
-  std::string BPP_fixed_frame;
-  while(BPP_fixed_frame.empty()){
-    ROS_DEBUG("CM - Attempting to get param 'BPP_fixed_frame'");
-    if (nh.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
-        ROS_DEBUG("CM - Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
-        fixed_frame_.assign(BPP_fixed_frame);
-    } else {
-        ROS_WARN("CM - Failed to get param 'param_name'");
-    }
+  if (nh.getParam("BPP_fixed_frame", fixed_frame_)) {
+      ROS_DEBUG("CM - Received fixed frame for plugin: %s", fixed_frame_.c_str());
+  } else {
+      ROS_WARN("CM - Failed to get param 'param_name' - setting to defualt: 'world'");
+      fixed_frame_ = "world"; ////////////////
   }
 }
 

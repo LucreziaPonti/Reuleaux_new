@@ -40,16 +40,11 @@ PlaceBase::~PlaceBase()
 
 void PlaceBase::init()
 {
-  ///ros::NodeHandle nh;
-  std::string BPP_fixed_frame;
-  while(BPP_fixed_frame.empty()){
-    ROS_DEBUG("PB - Attempting to get param 'BPP_fixed_frame'");
-    if (nh_.getParam("BPP_fixed_frame", BPP_fixed_frame)) {
-        ROS_DEBUG("PB - Received fixed frame for plugin: %s", BPP_fixed_frame.c_str());
-        fixed_frame_.assign(BPP_fixed_frame);
-    } else {
-        ROS_WARN("PB - Failed to get param 'param_name'");
-    }
+  if (nh_.getParam("BPP_fixed_frame", fixed_frame_)) {
+      ROS_DEBUG("PB - Received fixed frame for plugin: %s", fixed_frame_.c_str());
+  } else {
+      ROS_WARN("PB - Failed to get param 'param_name' - setting to defualt: 'world'");
+      fixed_frame_ = "world"; ////////////////
   }
   //show_ureach_models_ = false;
 }
@@ -211,7 +206,7 @@ void PlaceBase::setBasePlaceParams(int base_loc_size, int high_score_sp)
 
 //Creating <spheres, ri> and <highscoringsp> multimap from the <sphere, poses> the bool determines wherther to make it 2d/3d
 void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses, /*baseTrnsCol*/
-                   std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp/*, ///// bool reduce_D*/)
+                   std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp)/*, ///// bool reduce_D*/
 {
   //OLDFILTER//////ros::NodeHandle nn;
   kinematics::Kinematics k;
@@ -562,7 +557,7 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
     ////    createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
       }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
         /*////////////*/std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now(); 
-        sd_->associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res,true,transform_arm_to_root_);
+        sd_->associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res, true, transform_arm_to_root_);
         /*////////////*/std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); 
         /*////////////*/std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); 
         /*////////////*/ROS_INFO("Time for AssociatePose: %ld ms", AP.count());  
@@ -775,14 +770,22 @@ void PlaceBase::findBaseByPCA()
     final_base_pose.position.x = ws.WsSpheres[i].point.x;
     final_base_pose.position.y = ws.WsSpheres[i].point.y;
     final_base_pose.position.z = ws.WsSpheres[i].point.z;
-
+    
     Eigen::Affine3d final_base_tf;
     tf::poseMsgToEigen(final_base_pose, final_base_tf);
-    Eigen::Affine3d rx = Eigen::Affine3d(Eigen::AngleAxisd(-M_PI/2, Eigen::Vector3d(1,0,0)));
-    geometry_msgs::Pose new_base_pose;
-    tf::poseEigenToMsg( final_base_tf * rx  , new_base_pose);
+    geometry_msgs::Pose base_pose; 
+    double tolerance = 0.3; // Adjust this value as needed (same as in sphere_discretization::associatePose)
+    Eigen::Vector3d z_axis = final_base_tf.linear().col(2); 
+    // check that the orientation of the z axis is sufficiently close to the vertical orientation
+    if ((fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)) {
+      base_pose = final_base_pose;
+    }else{ // if it is not then an additional transformation is required
+      Eigen::Affine3d rx = Eigen::Affine3d(Eigen::AngleAxisd(-M_PI/2, Eigen::Vector3d(1,0,0)));
+      tf::poseEigenToMsg( final_base_tf * rx  , base_pose);
+    }
+   
 
-    pose_scores.push_back(new_base_pose);
+    pose_scores.push_back(base_pose);
 
   }
 
@@ -1084,6 +1087,7 @@ void PlaceBase::ShowUnionMap(bool show_map)
       ws.WsSpheres.push_back(wss);
     }
     ROS_DEBUG(" publishing spheres");
+    ros::Duration(1).sleep();
     workspace_pub.publish(ws);
   }
 }

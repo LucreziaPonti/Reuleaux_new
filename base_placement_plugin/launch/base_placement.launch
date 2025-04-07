@@ -3,9 +3,11 @@
 
     <arg name = "fixed_frame" default="odom" doc="fixed frame for the base placement usually corresponds to the parent of the virtual joint of the robot"/>
     <arg name = "bp_results" default="false"/>
+    
     <arg name = "OGM2d_filtering" default="true"/>
     <arg name = "OGM2d_topic" default="/move_base/global_costmap/costmap"/>
-    <arg name = "OGM2d_cost_threshold" default="70"/>
+    <arg name = "OGM2d_cost_threshold" default="60"/>
+    
     <arg name = "TIAGO_torso_filtering" default="true"/>
 
     <param name="BPP_fixed_frame" value="$(arg fixed_frame)" />
@@ -16,7 +18,7 @@
     <param name="OGM2d_filtering" value="$(arg OGM2d_filtering)"/>
     <group if="$(arg OGM2d_filtering)">
         <param name="OGM2d_topic" value="$(arg OGM2d_topic)"/>
-        <param name="cost_threshold" value="$(arg OGM2d_filtering)"/>
+        <param name="OGM2d_cost_threshold" value="$(arg OGM2d_cost_threshold)"/>
     </group>
 
     <!--Running RVIZ for base_placement-->

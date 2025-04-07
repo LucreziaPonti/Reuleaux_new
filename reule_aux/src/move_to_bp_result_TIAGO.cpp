@@ -289,7 +289,12 @@ int main(int argc, char **argv){
     ros::init(argc, argv, "move_to_bp_result_TIAGO");
     ros::NodeHandle n; 
     clear_all();
-    n.getParam("BPP_fixed_frame", fixed_frame_);
+    if (n.getParam("BPP_fixed_frame", fixed_frame_)) {
+        ROS_DEBUG("PB - Received fixed frame for plugin: %s", fixed_frame_.c_str());
+    } else {
+        ROS_WARN("PB - Failed to get param 'param_name' - setting to defualt: 'world'");
+        fixed_frame_ = "odom"; ////////////////
+    }
     ROS_DEBUG("//// setup ok, fixed frame: %s", fixed_frame_.c_str());
 
     ros::Subscriber bp_sub = n.subscribe("reule_aux/bp_results", 1000, bp_sub_cb);

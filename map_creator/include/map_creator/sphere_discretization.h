@@ -134,6 +134,7 @@ public:
   };
 
 private:
+
   // PARAMETERS FOR THE FILTERING IN ASSOCIATEPOSES
   tf2::Transform arm_to_root_tf_;
   bool TIAGO_torso_filt_;
