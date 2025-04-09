@@ -1,0 +1,40 @@
+<launch>
+    
+    <arg name="frame_id" default="odom" />  <!-- fixed map frame (set to 'map' if SLAM or localization running!) - default="map" -->
+    <arg name="resolution" default="0.04" /> <!-- resolution of the octomap - default="0.05" -->
+    <arg name="cloud_topic" default="/xtion/depth_registered/points" /> <!-- data source to integrate (PointCloud2) -->
+
+    <arg name="latch" default="true" /> 
+    <arg name="static_octomap_name" default="eut_kitchen.ot" />
+    <arg name="map_file" default="$(find reule_aux)/octomap_server_utils/maps/$(arg static_octomap_name)" />
+
+    <arg name="filter_ground" default="true" />
+    <arg name="base_frame_id" default="base_footprint" /> <!--robot's base frame in which ground plane detection is performed (if enabled) - default="base_footprint" -->
+    <arg name="ground_filter/distance" default="0.04" /> <!-- distance threshold for ground plane detection - default="0.04" -->
+    <arg name="ground_filter/angle" default="0.15" /> <!-- angle threshold for ground plane detection - default="0.15" -->
+    <arg name="ground_filter/plane_distance" default="0.07" /> <!-- Distance threshold from z=0 for a plane to be detected as ground - default="0.07" -->
+
+    
+    <arg name="rviz" default="true" />
+
+	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+		<remap from="cloud_in" to="$(arg cloud_topic)" /> 
+        
+        <param name="frame_id" type="string" value="$(arg frame_id)" />
+		<param name="resolution" value="$(arg resolution)" />
+
+		<param name="latch" value="$(arg latch)" />
+        <param name="map_file" value="$(arg map_file)" if="$(arg latch)" />
+        
+        <param name="filter_ground" value="$(arg filter_ground)" />
+        <param name="base_frame_id" type="string" value="$(arg base_frame_id)" />
+        <param name="ground_filter/distance" value="$(arg ground_filter/distance)" />
+        <param name="ground_filter/angle" value="$(arg ground_filter/angle)" />
+        <param name="ground_filter/plane_distance" value="$(arg ground_filter/plane_distance)" />
+        
+        <param name="sensor_model/max_range" value="5.0" /> <!-- maximum range to integrate (speedup!) -->        
+	</node>
+
+   <node pkg="rviz" type="rviz" output="screen" name="octomap_viz" args="-d $(find reule_aux)/octomap_server_utils/octomap.rviz" if="$(arg rviz)"/>
+
+</launch>

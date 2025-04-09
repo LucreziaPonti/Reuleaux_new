@@ -703,13 +703,17 @@ void PlaceBase::findBaseByVerticalRobotModel()
   ROS_INFO("Finding optimal ROBOT base pose by Vertical robot model.");
   std::vector<geometry_msgs::Pose> base_poses;
   std::vector<geometry_msgs::Pose> base_poses_user;
-  int num_of_desired_sp = HIGH_SCORE_SP_+50;
+  int num_of_desired_sp = HIGH_SCORE_SP_*4;
   int num_of_sp = highScoreSp.size();
+  int jump=4; //The iteration is taken 4 just to make sure that the robot models are not so close to each other
+  if(num_of_desired_sp>num_of_sp){
+    num_of_desired_sp = num_of_sp;
+    jump=num_of_sp/HIGH_SCORE_SP_; // in I don't have enough spheres I do lower iterations
+  }
   if(BASE_LOC_SIZE_>num_of_sp)
     ROS_ERROR("Desired base locations are too high (num_of_sp=%d , num_base_loc=%d). Please reduce it",num_of_sp,BASE_LOC_SIZE_);
-  //The iteration is taken 4 just to make sure that the robot models are not so close to each other
-  for(int i=0;i<num_of_desired_sp;i+=4)
-  {
+  
+  for(int i=0;i<num_of_desired_sp;i+=jump){
     geometry_msgs::Pose prob_base_pose;
     prob_base_pose.position.x = highScoreSp[i][0];
     prob_base_pose.position.y = highScoreSp[i][1];

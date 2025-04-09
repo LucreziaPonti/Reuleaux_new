@@ -4,7 +4,8 @@ Auxiliary package for reuleaux's original packages.
 
 It contains the definition of new messages, services and nodes useful in the packages (mainly base_placement_plugin)
 
-## New messages and topics
+## MOVE TO BASE PLACMENT RESULTS
+### New messages and topics
 - **reule_aux/bp_results** is the new topic used in the BPP (see base_placement_plugin>src>place_base.cpp) to publish messages (of the new type *BP_Res* defined here - see msgs) containing the poses obtained with the plugin
 - **reule_aux/BP_Res.msg** is a custom message type (for the topic above) which allows to transfer all the info of the results given by the BPP, it contains: 
     - bool *best_pose* -> true only fot the best pose
@@ -31,17 +32,49 @@ The additional computation is used to compute the value to "give" to the torso j
 The goal is sent to the navigation stack and the value for the torso is given to the robot using the Torso_controller.  
 !! If the TIAGo is simulated only in RViz (e.g. using the demo of the moveit_config pkg) the torso_controller is not available (usually), so the position broadcasted with the tf will make the robot float (use the robot_model display to visualize the robot floating - the moveit one does not show it defying gravity). 
 
-## Launch
-- To use the reuleaux base placement plugin (and move_to_bp_reusult): 
+### Launch
+To use the reuleaux base placement plugin (and move_to_bp_reusult): 
+```
+roslaunch base_placement_plugin base_placement.launch bp_results:=true
+```
+Move the robot in RViz using static tf: 
+```
+rosservice call move_to_bp_reusult/static_tf
+```
+Move the robot in simulation using the navigation stack goal:
+```
+rosservice call move_to_bp_reusult/nav
+```
+
+## OCTOMAP MAPPING
+[Octomaps](https://octomap.github.io/) are 3D occupancy grid maps, based on the octree structure.  
+Libraries are available that provide the tools to generate, visualize and use these maps.  
+I highly suggest to follow the official istructions for installation and usage, but here is my mini "guide".  
+
+### Installation
+Make sure that the octomap, octovis and octomap-mapping packages are installed (use ```sudo apt search``` to check).
+
+### Usage
+The octomap_server_node works by taking in the information of a PointCloud2 sensor and using it to create the octomap.  Its functioning is very similar to the *map_server* used for 2d navigation:
+It allows to create new maps from zero or from a static map loaded at start, to save the map created and get it (via topic or service).
+
+To run correctly we need to make sure all the parameters are set and the topic names remapped. There are quite a few parameters needed, make sure to check out the [rosWiki page](http://wiki.ros.org/octomap_server) to see all and understand better the functioning.
+
+The octomap_server pkg provides different nodes, but the most important (in my opinion, and for this work) are: **octomap_server_node** which performs the mapping and advertises all the topics and services to use the map and **octomap_saver** which once the map is created (with the node) saves them (in format *.bt* for BINARY MAPS - free/occupied - or *.ot* for FULL PROBABILITY MAPS - probability of occupancy). Additionaly an other useful node is the **octomap_server_static** node which, given a static map, advertises the services to get it - not the topics.
+
+
+In this package a launch file (*octomap_server.launch*) is provided that allows to set all the needed parameters and run the **octomap_server_node** correctly for mapping (from zero or with a static map as "seed"). (see below)   
+
+To make sure that the mapping is working and to visualize the map you need to run rviz and add a **MarkerArray** (and set the topic to */occupied_cells_vis_array*)
+
+#### Launch options:
+- Mapping from zero: *latch=false* , set the parameters for the ground plane filtering as you prefer them  
+Launch the server and visualize it in rviz, once the map is completed to your satisfaction, save it (make sure to do this in the folder where you want to save your map):
     ```
-    roslaunch base_placement_plugin base_placement.launch bp_results:=true
+    rosrun octomap_server octomap_saver -f <name of your map>.<bt/ot>
     ```
-    Move the robot in RViz using static tf: 
-    ```
-    rosservice call move_to_bp_reusult/static_tf
-    ```
-    Move the robot in simulation using the navigation stack goal:
-    ```
-    rosservice call move_to_bp_reusult/nav
-    ```
+    *.bt* is used for BINARY MAPS  - *.ot* is used for FULL PROBABILITY MAPS
+- Mapping with a static map loaded: *latch=true*, set the *static_octomap_name* param to the name of the map you want to load **including** ".bt/.ot" 
+- OCTOMAP VISUALIZATION: in the launch use the arg *rviz* to open a new rviz window with the visualization of the octomap
+- GROUND FILTERING: in many applications - such as this - the ground needs to not be considered as an obstacle. Setting the param *filter_ground* to true allows to do that (see the official wikis for a better explanation on how this is done), other parameter are used to adjust the ground detection method. 
 

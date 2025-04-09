@@ -38,9 +38,9 @@ The other packages used in this thesis work are:
     ```
     sudo apt install ros-noetic-moveit
     ```
-- Install "additional" PKGs for BP_TO_NAV - if needed:
+- Install "additional" PKGs - if needed:
     ```
-    sudo apt install ros-noetic-navigation
+    sudo apt install ros-noetic-navigation ros-noetic-octomap
     ```
 - Create a workspace and clone the repository in the src folder 
 - ROBOT INFORMATION: for this package to work you will need a robot description packages, most important package is the *robot*_moveit_config package in order to have the robot description and the kinematic solver available through MoveIt! 
@@ -49,13 +49,17 @@ The other packages used in this thesis work are:
 
 
 ## Use
-!!! For all packages refer to their own README pages. This is just an overview
+!!! For all packages refer to their own README pages. This is just an overview:
 - **reuleaux**: is a metapackage useful for building;
 - **workspace_visualization**: contains the "setup" for the visualization of all the maps (RM, IRM, UM), the icons and the plugin descriton of the custom display
 - *map_creator*: contains the tools to create, load and visualize the RM and IRM; (as is it uses directly IKFast for the computation - no self-collision check)
 - *map_generation*: contains a node that allows to create the REACHABILITY MAP exploiting MoveIt!, to perform self-collision checks; It relies of map_creator for the computation of the IRM and the visualization of all maps;
 - **base_placement_plugin**: is the main package of the repository, it contains the plugin for Rviz that allows to create the task and compute the base placement of the robot. 
 - **reule_aux**: new auxiliary package which contains the definition of new msgs (like reule_aux/bp_results used in the BPP) and nodes useful for a better use of the repo in a complete simulation
+
+## **ATTENTION**
+This work has been done for a Bachelor degree thesis in Automation Engineering by a candidate that is self-taught in ROS: it may contain errors and not fully correct information.  
+The README are written as I wished they were while learning - they contain a lot of explainations that most ROS users don't need, and might not be the most efficient/correct way to use some tools/resources.   
 
 
 
