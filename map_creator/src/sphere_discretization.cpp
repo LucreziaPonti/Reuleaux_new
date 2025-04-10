@@ -576,12 +576,72 @@ void SphereDiscretization::findOptimalPosebyAverage(const std::vector< geometry_
   final_base_pose.orientation.w = final_base_quat[3];
 }
 
-void SphereDiscretization::OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg){ 
-  ogm_2d_ = *msg;
-  OGM2d_rcvd_ = true;
-  ROS_INFO("Received global costmap with resolution: %f, size: %d x %d", ogm_2d_.info.resolution, ogm_2d_.info.width, ogm_2d_.info.height);
+void SphereDiscretization::OCTOMAP_PS_CB(const moveit_msgs::PlanningScene scene_msg){
+  ROS_INFO("///// PLANNING SCENE cb");
+  if(scene_msg.world.octomap.octomap.data.size() > 0){
+    ROS_INFO("////// sd.readplaningsceene: /// Planning scene received");
+    octomap_ = scene_msg.world.octomap.octomap;
+    OCTOMAP_rcvd_ = true;
+  }
+}
+void SphereDiscretization::OCTOMAP_srv_CB(const octomap_msgs::Octomap msg){
+///  ROS_INFO("///// octomap cb");
+  if(msg.data.size() > 0){
+///    ROS_INFO("//////// ocotomap received");
+    octomap_ = msg;
+    OCTOMAP_rcvd_ = true;
+  }
+}
+bool SphereDiscretization::getOCTOMAP(std::string topic, float res){
+///  ROS_INFO("///// getOCTOMAP STARTED");
+  OCTOMAP_rcvd_ = false;
+  if(OCTOMAP_PS_filt_){
+    OCTOMAP_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OCTOMAP_PS_CB, this);
+  }else{
+    OCTOMAP_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OCTOMAP_srv_CB, this);
+  }
+  int wait=0;///////////
+  while(!OCTOMAP_rcvd_ && wait<10){///////////
+    ROS_INFO("waiting to receive octomap from %s - %d",topic.c_str(), wait);
+    wait+=1;
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
+  OCTOMAP_sub_.shutdown();
+  if(wait==10){////////////review
+    ROS_ERROR("TIMEDOUT ON WAITING FOR %s", topic.c_str());
+    return false;
+  }else{ 
+    octomap::AbstractOcTree* abstract_tree = octomap_msgs::msgToMap(octomap_);
+    collision_octree_ = (octomap::OcTree*) abstract_tree;
+  } 
+  return true;
 }
 
+void SphereDiscretization::OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg){ 
+  if(!OGM2d_rcvd_){
+    ogm_2d_ = *msg;
+    OGM2d_rcvd_ = true;
+    ROS_INFO("Received global costmap with resolution: %f, size: %d x %d", ogm_2d_.info.resolution, ogm_2d_.info.width, ogm_2d_.info.height);
+  }
+}
+bool SphereDiscretization::getOGM2d(std::string topic){
+  OGM2d_rcvd_ = false;
+  OGM2d_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OGM2d_CB, this);
+  int wait=0;///////////
+  while(!OGM2d_rcvd_ && wait<10){///////////
+    ROS_INFO("Waiting to receive occupancy grid map from %s - %d",topic.c_str(), wait);
+    wait+=1;
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
+  if(wait==10){////////////review
+    ROS_ERROR("TIMEDOUT ON WAITING FOR %s", topic.c_str());
+    return false;
+  }
+  OGM2d_sub_.shutdown();
+  return true;
+}
 
 
 void SphereDiscretization::associatePose(std::multimap< std::vector< double >, std::vector< double > >& baseTrnsCol,
@@ -589,8 +649,15 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
                                          const std::multimap< std::vector< double >, std::vector< double > >& PoseColFilter,
                                          const float resolution, const bool arm_pose, const Eigen::Affine3d arm_to_root_eigen)
 {
-  // retreive the parameters to choose the type of filtering 
-    ros::NodeHandle nh;  
+// retreive the parameters to choose the type of filtering  
+    if (!nh.getParam("OCTOMAP_SRV_filtering", OCTOMAP_srv_filt_)) {
+      ROS_WARN("associatePose - Failed to get param 'OCTOMAP_srv_filt_' - setting to defualt: 'false'");
+      OCTOMAP_srv_filt_ = false;
+    }
+    if (!nh.getParam("OCTOMAP_PS_filtering", OCTOMAP_PS_filt_)) {
+      ROS_WARN("associatePose - Failed to get param 'OCTOMAP_PS_filt_' - setting to defualt: 'false'");
+      OCTOMAP_PS_filt_ = false;
+    }
     if (!nh.getParam("OGM2d_filtering", OGM2d_filt_)) {
         ROS_WARN("associatePose - Failed to get param 'OGM2_filt_' - setting to defualt: 'false'");
         OGM2d_filt_ = false;
@@ -599,24 +666,47 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
       ROS_WARN("associatePose - Failed to get param 'TIAGO_torso_filt_' - setting to defualt: 'false'");
       TIAGO_torso_filt_ = false;
     }
+// setup the filtering data depending on the filtering used
+
+    if(OCTOMAP_srv_filt_){
+      ////ROS_INFO("///// OCTOMAP_srv_filt_");
+      if(!arm_pose){ // If I have robot base poses i should use the projected map of the octomap to filter, it is a 2D OGM
+        OGM2d_cost_lim_=50; // octomap /projected_map contains "binary" values of 0 and 100
+        ////ROS_INFO("///// arm_pose false chiamo getOGM2d");
+        if(!SphereDiscretization::getOGM2d("/projected_map")){
+          return;
+        }
+      }else{
+        ////ROS_INFO("/////// arm_pose true chiamo getOCTOMAP");
+        nh.getParam("OCTOMAP_srv_topic", OCTOMAP_srv_topic_);
+        if(!SphereDiscretization::getOCTOMAP(OCTOMAP_srv_topic_, resolution)){
+          return;
+        }
+      }
+    }
+
+    if(OCTOMAP_PS_filt_){
+      ROS_INFO("///// OCTOMAP_PS_filt_");
+      if(!arm_pose){ // If I have robot base poses i should use the projected map of the octomap to filter, it is a 2D OGM 
+        //OGM2d_cost_lim_ //// not sure wat value to set it to 
+        ROS_INFO("///// arm_pose false chiamo getOGM2d");
+        if(!SphereDiscretization::getOGM2d("/projected_map")){ ///// make sure it works in this case
+          return;
+        }
+      }else{
+        ROS_INFO("/////// arm_pose true chiamo getOCTOMAP");
+        if(!SphereDiscretization::getOCTOMAP("/move_group/monitored_planning_scene",resolution)){
+          return;
+        }
+      }
+    }
 
     if(OGM2d_filt_){ // if I want to use a 2-dimentional Occupancy Grid Map I need these parameters
       nh.getParam("OGM2d_cost_threshold",OGM2d_cost_lim_);
       nh.getParam("OGM2d_topic",OGM2d_topic_);
-      OGM2d_rcvd_ = false;
-      OGM2d_sub_ = nh.subscribe(OGM2d_topic_, 10, &SphereDiscretization::OGM2d_CB, this);
-      int wait=0;///////////
-      while(!OGM2d_rcvd_ && wait<100){///////////
-        ROS_INFO("waiting to receive occupancy grid map - %d", wait);
-        wait+=1;
-        ros::Duration(0.1).sleep();
-        ros::spinOnce();
-      }
-      if(wait==100){////////////review
-        ROS_ERROR("TIMEDOUT ON WAITING FOR %s", OGM2d_topic_.c_str());
+      if(!SphereDiscretization::getOGM2d(OGM2d_topic_)){
         return;
       }
-      OGM2d_sub_.shutdown();
 //for now i only need it here but if i implement more methods it might make sense to move it outiside this if
       if(arm_pose){
         Eigen::Vector3d translation = arm_to_root_eigen.translation();
@@ -675,13 +765,12 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
         //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
         double tolerance = 0.2;//////////////////////////////// quite likely too big but for now i keep it like this
         tf2::Matrix3x3 rotation_matrix(new_trans_quat);
-        tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector
-        // Check if the z axis is close to vertical (0, 0, 1)
+        tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector then check it is close to vertical
         if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
-          //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);
+          //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);////
           continue;
         }
-        //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);
+        //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);////
 
       }else{ // arm base pose (other methods)
         if(TIAGO_torso_filt_){ //// extra robot specific filtering
@@ -691,19 +780,18 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
           //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
           double tolerance = 0.2; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
           tf2::Matrix3x3 rotation_matrix(new_trans_quat);
-          tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector
-          // Check if the z axis is close to vertical (0, 0, 1)
+          tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector then check it is close to vertical 
           if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
-            //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);
+            //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]); /////
             continue;
           }
-        //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);
+        //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]); /////
         }
       }
 
-      if(OGM2d_filt_ && OGM2d_rcvd_){ //check the position validity with the occupancy grid map
+      if(OGM2d_rcvd_ and arm_pose ){ // FILTERING WITH OCCUPANCY GRID MAP FOR ARM POSES
         tf2::Vector3 check_trans_vec;
-        if(arm_pose){ // i need to find the corresponding robot base pose to check the robot base pose against the costmap
+        /////if(arm_pose){ // i need to find the corresponding robot base pose to check the robot base pose against the costmap
           tf2::Transform robot_pose_trns;
           if(TIAGO_torso_filt_){ // adjust orientation to vertical to make sure that the costmap check is correct for the robot tiago on the ground
             tf2::Transform tiago_trns;
@@ -719,9 +807,9 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
             robot_pose_trns = new_trns*arm_to_root_tf_;
           }
           check_trans_vec = robot_pose_trns.getOrigin();
-        }else{ // already is a robot root pose
-          check_trans_vec = new_trans_vec;
-        }
+        ////}else{ // already is a robot root pose
+        ////  check_trans_vec = new_trans_vec;
+        ////}
         //COMPUTE COST IN THAT POSITION
           // Convert world coordinates to map indices
           int mx = static_cast<int>((check_trans_vec[0]  - ogm_2d_.info.origin.position.x) / ogm_2d_.info.resolution);
@@ -741,6 +829,16 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
             continue; //// skip the rest of the for cycle code = don't store the pose into trns_col and cloud
           } 
       }
+      
+      /*if(OCTOMAP_rcvd_){ // FILTERING WITH AN OCTOMAP 
+        //// VERSIONE NO ELABORAZIONE EXTRA
+        octomap::point3d point_to_check(new_trans_vec[0], new_trans_vec[1], new_trans_vec[2]);
+        // Find the node corresponding to that point
+        octomap::OcTreeNode* node = collision_octree_->search(point_to_check);
+        if(!node || collision_octree_->isNodeOccupied(node)){
+            continue;
+        }
+      }*/
       
       std::vector< float > position;
       position.reserve(3);
@@ -765,19 +863,18 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
   }  // done creating base pose cloud
 
   // Create octree for binning the base poses
-  pcl::octree::OctreePointCloudSearch< pcl::PointXYZ > octree(resolution);
-  octree.setInputCloud(cloud);
-  octree.addPointsFromInputCloud();
+  pcl::octree::OctreePointCloudSearch< pcl::PointXYZ > base_poses_octree(resolution);
+  base_poses_octree.setInputCloud(cloud);
+  base_poses_octree.addPointsFromInputCloud();
   
-  // Get bounding box for checking search validity
+  // Get bounding box OF THE UNION MAP AT THIS POINT for checking search validity
   double min_x, min_y, min_z, max_x, max_y, max_z;
-  octree.getBoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
+  base_poses_octree.getBoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
   ROS_DEBUG("associatePoses: BOUNDING BOX x:[ %f : %f] , y:[ %f : %f] , z:[ %f : %f]", min_x, max_x, min_y, max_y, min_z, max_z);
 
   int sphCount=0;/////////////////////////
   // add all base poses from cloud to an octree
-  for (int i = 0; i < spCenter.size(); i++)
-  {
+  for (int i = 0; i < spCenter.size(); i++){
     pcl::PointXYZ searchPoint;
     searchPoint.x = spCenter[i].x();
     searchPoint.y = spCenter[i].y();
@@ -793,9 +890,36 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
     ROS_DEBUG("Point is in box: %d", isInBox);
 
     if (isInBox){
+      if(OCTOMAP_rcvd_){ // FILTERING WITH AN OCTOMAP - filter the nodes in space that are accupied (before checking if they "contain" possible base poses)
+        octomap::point3d point_to_check(searchPoint.x, searchPoint.y, searchPoint.z);
+        // Find the node corresponding to that point
+        octomap::OcTreeNode* node = collision_octree_->search(point_to_check);
+        if(!node || collision_octree_->isNodeOccupied(node)){
+            continue;
+        }  
+      }
+      if(OGM2d_rcvd_ and !arm_pose ){ // FILTERING WITH OCCUPANCY GRID MAP FOR ARM POSES
+        // Convert world coordinates to map indices
+        int mx = static_cast<int>((searchPoint.x  - ogm_2d_.info.origin.position.x) / ogm_2d_.info.resolution);
+        int my = static_cast<int>((searchPoint.y - ogm_2d_.info.origin.position.y) / ogm_2d_.info.resolution);
+        //ROS_DEBUG("Checking point: (%f,%f) - computed mx,my = %d, %d",searchPoint.x , searchPoint.y, mx,my);
+        if (mx < 0 || mx >= ogm_2d_.info.width || my < 0 || my >= ogm_2d_.info.height){
+            ROS_WARN("Point is out of bounds.");
+            continue;
+        }
+        // Get the cost at the specified point
+        int index = my * ogm_2d_.info.width + mx;
+        int cost = ogm_2d_.data[index];
+        ROS_DEBUG("Cost: %d", cost);
+      //CHECK THE VALIDITY
+        if(cost>OGM2d_cost_lim_){
+          ROS_DEBUG("POINT FILTERED OUT");
+          continue; //// skip the rest of the for cycle code = don't store the pose into trns_col and cloud
+        } 
+      }      
       sphCount+=1;/////////////////////////////
       //// other option for filtering with OGM - discarted
-            octree.voxelSearch(searchPoint, pointIdxVec);
+      base_poses_octree.voxelSearch(searchPoint, pointIdxVec);
                 
       if (pointIdxVec.size() > 0){
         std::vector< double > voxel_pos;

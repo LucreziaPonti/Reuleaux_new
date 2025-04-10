@@ -4,22 +4,30 @@
     <arg name = "fixed_frame" default="odom" doc="fixed frame for the base placement usually corresponds to the parent of the virtual joint of the robot"/>
     <arg name = "bp_results" default="false"/>
     
-    <arg name = "OGM2d_filtering" default="true"/>
-    <arg name = "OGM2d_topic" default="/move_base/global_costmap/costmap"/>
-    <arg name = "OGM2d_cost_threshold" default="60"/>
+    <arg name = "OCTOMAP_SRV_filtering" default="true"/>
+        <arg name = "OCTOMAP_srv_topic" default="/octomap_full"/>
+    <arg name = "OCTOMAP_PS_filtering" default="false"/> 
+
+
+    <arg name = "OGM2d_filtering" default="false"/>
+        <arg name = "OGM2d_topic" default="/move_base/global_costmap/costmap"/>
+        <arg name = "OGM2d_cost_threshold" default="60"/>
     
     <arg name = "TIAGO_torso_filtering" default="true"/>
 
-    <param name="BPP_fixed_frame" value="$(arg fixed_frame)" />
 
+
+    <param name="BPP_fixed_frame" value="$(arg fixed_frame)" />
     <!--PARAMETERS FOR THE FILTERING of the union map - used within sphere_discretization::associatePose-->
     <param name="TIAGO_torso_filtering" value="$(arg TIAGO_torso_filtering)"/>
     
+    <param name="OCTOMAP_SRV_filtering" value="$(arg OCTOMAP_SRV_filtering)"/>
+    <param name="OCTOMAP_srv_topic" value="$(arg OCTOMAP_srv_topic)"/>
+    <param name="OCTOMAP_PS_filtering" value="$(arg OCTOMAP_PS_filtering)"/>
+
     <param name="OGM2d_filtering" value="$(arg OGM2d_filtering)"/>
-    <group if="$(arg OGM2d_filtering)">
-        <param name="OGM2d_topic" value="$(arg OGM2d_topic)"/>
-        <param name="OGM2d_cost_threshold" value="$(arg OGM2d_cost_threshold)"/>
-    </group>
+    <param name="OGM2d_topic" value="$(arg OGM2d_topic)"/>
+    <param name="OGM2d_cost_threshold" value="$(arg OGM2d_cost_threshold)"/>
 
     <!--Running RVIZ for base_placement-->
     <node pkg="rviz" type="rviz" output="screen" name="BPP_rviz_plugin" args="-d $(find base_placement_plugin)/rviz/base_placement.rviz" />

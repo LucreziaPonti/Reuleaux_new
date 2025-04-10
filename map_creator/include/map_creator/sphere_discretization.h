@@ -21,6 +21,11 @@
 
 
 #include <nav_msgs/OccupancyGrid.h>
+#include <octomap_msgs/Octomap.h>
+#include <moveit_msgs/PlanningScene.h>
+#include <octomap_msgs/conversions.h>
+#include <octomap/AbstractOcTree.h>
+
 
 
 namespace sphere_discretization
@@ -134,19 +139,34 @@ public:
   };
 
 private:
-
-  // PARAMETERS FOR THE FILTERING IN ASSOCIATEPOSES
+  ros::NodeHandle nh; 
+  // PARAMETERS FOR THE FILTERING OF THE UNION MAP IN ASSOCIATEPOSES
   tf2::Transform arm_to_root_tf_;
   bool TIAGO_torso_filt_;
-  // parameters used to filter the union map using a 2-dimentional OCCUPANCY GRID MAP (e.g. global costmap)
+
+  // 2-dimentional OCCUPANCY GRID MAP (e.g. global costmap - projected map of the octomap)
   bool OGM2d_filt_;
   ros::Subscriber OGM2d_sub_;
   std::string OGM2d_topic_;
-  bool OGM2d_rcvd_;
+  bool OGM2d_rcvd_ = false;
   int OGM2d_cost_lim_; // limit of the "cell"'s cost after which the point is filtered out 
   nav_msgs::OccupancyGrid ogm_2d_;
-
   void OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg);
+  bool getOGM2d(std::string topic);
+
+  // octomap (form OCTOMAP_SERVER or from PLANNING SCENE)
+  bool OCTOMAP_srv_filt_; // get octomap from octomap server
+  void OCTOMAP_srv_CB(const octomap_msgs::Octomap msg);
+  std::string OCTOMAP_srv_topic_;
+
+  bool OCTOMAP_PS_filt_; // get octomap from planning scene
+  void OCTOMAP_PS_CB(const moveit_msgs::PlanningScene scene_msg);
+  
+  bool getOCTOMAP(std::string topic, float res);
+  ros::Subscriber OCTOMAP_sub_;
+  bool OCTOMAP_rcvd_ = false;
+  octomap_msgs::Octomap octomap_;
+  octomap::OcTree* collision_octree_;
 
 };
 

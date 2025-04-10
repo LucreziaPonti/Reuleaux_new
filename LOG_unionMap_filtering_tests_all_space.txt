@@ -125,9 +125,28 @@ TEST: ROBOT FILTERING (orientation "close" to z vertical + tiago torso limits) (
 
 
 TEST: COSTMAP filtering + ROBOT FILTERING (04Apr) - no sense doing it bc filter all out
+   
+TEST: OCTOMAP from octomap_server - no robot filtering (09Apr)
 
     RESULT: 
-    
+    [ INFO] [1744255266.379591002, 256.896000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1744255266.415418959, 256.918000000]: waiting to receive octomap from /octomap_full - 0
+    [ INFO] [1744255266.545006213, 257.018000000]: waiting to receive octomap from /octomap_full - 1
+    [ INFO] [1744255268.151190499, 258.149000000]: //////////////////////////// dimensione for graspxIRM = 287556
+    [ INFO] [1744255268.151245198, 258.149000000]: //////////////////////////// trns_col size = 287556
+    [ INFO] [1744255268.151258649, 258.149000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1744255268.151275917, 258.149000000]: //////////////////////////// sfere per cui fa il voxel search = 84746
+    [ INFO] [1744255268.182420854, 258.169000000]: Time for AssociatePose: 1802 ms
+    [ INFO] [1744255268.182466099, 258.169000000]: Size of baseTrnsCol dataset: 233146
+    [ INFO] [1744255269.976085229, 259.480000000]: Time for CreateSpheres: 1793 ms
+    [ INFO] [1744255269.976134384, 259.480000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1744255269.976145061, 259.480000000]: Poses in Union Map: 233146
+    [ INFO] [1744255269.976152442, 259.480000000]: Spheres in Union Map: 21852
+    [ INFO] [1744255269.976160561, 259.480000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+
+    Time for FindBase: 6823 ms
+
     COMMENT on FILTERING:  
 
 TEST: 
