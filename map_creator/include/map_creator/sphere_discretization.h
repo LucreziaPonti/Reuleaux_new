@@ -23,6 +23,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <octomap_msgs/Octomap.h>
 #include <moveit_msgs/PlanningScene.h>
+#include <moveit_msgs/GetPlanningScene.h> 
 #include <octomap_msgs/conversions.h>
 #include <octomap/AbstractOcTree.h>
 
@@ -156,14 +157,14 @@ private:
 
   // octomap (form OCTOMAP_SERVER or from PLANNING SCENE)
   bool OCTOMAP_srv_filt_; // get octomap from octomap server
+  ros::Subscriber OCTOMAP_srv_sub_;
   void OCTOMAP_srv_CB(const octomap_msgs::Octomap msg);
   std::string OCTOMAP_srv_topic_;
 
   bool OCTOMAP_PS_filt_; // get octomap from planning scene
-  void OCTOMAP_PS_CB(const moveit_msgs::PlanningScene scene_msg);
+  ros::ServiceClient OCTOMAP_ps_CL;
   
-  bool getOCTOMAP(std::string topic, float res);
-  ros::Subscriber OCTOMAP_sub_;
+  bool getOCTOMAP(std::string topic);
   bool OCTOMAP_rcvd_ = false;
   octomap_msgs::Octomap octomap_;
   octomap::OcTree* collision_octree_;

@@ -576,14 +576,7 @@ void SphereDiscretization::findOptimalPosebyAverage(const std::vector< geometry_
   final_base_pose.orientation.w = final_base_quat[3];
 }
 
-void SphereDiscretization::OCTOMAP_PS_CB(const moveit_msgs::PlanningScene scene_msg){
-  ROS_INFO("///// PLANNING SCENE cb");
-  if(scene_msg.world.octomap.octomap.data.size() > 0){
-    ROS_INFO("////// sd.readplaningsceene: /// Planning scene received");
-    octomap_ = scene_msg.world.octomap.octomap;
-    OCTOMAP_rcvd_ = true;
-  }
-}
+
 void SphereDiscretization::OCTOMAP_srv_CB(const octomap_msgs::Octomap msg){
 ///  ROS_INFO("///// octomap cb");
   if(msg.data.size() > 0){
@@ -592,13 +585,28 @@ void SphereDiscretization::OCTOMAP_srv_CB(const octomap_msgs::Octomap msg){
     OCTOMAP_rcvd_ = true;
   }
 }
-bool SphereDiscretization::getOCTOMAP(std::string topic, float res){
+bool SphereDiscretization::getOCTOMAP(std::string topic){
 ///  ROS_INFO("///// getOCTOMAP STARTED");
   OCTOMAP_rcvd_ = false;
-  if(OCTOMAP_PS_filt_){
-    OCTOMAP_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OCTOMAP_PS_CB, this);
+  if(OCTOMAP_PS_filt_){ // use a service call instead of a topic to get the planning scene  but ok
+    OCTOMAP_ps_CL = nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+    moveit_msgs::GetPlanningScene srv;
+    srv.request.components.components = moveit_msgs::PlanningSceneComponents::OCTOMAP;
+    if (OCTOMAP_ps_CL.call(srv)) {
+      if (srv.response.scene.world.octomap.octomap.data.size() > 0) {
+        ROS_INFO("Octomap received from /get_planning_scene service");/////////
+        octomap_ = srv.response.scene.world.octomap.octomap;
+        OCTOMAP_rcvd_ = true;
+      } else {
+        ROS_WARN("Empty octomap received from /get_planning_scene service");
+        return false;
+      }
+    } else {
+      ROS_ERROR("Failed to call /get_planning_scene service");
+      return false;
+    }
   }else{
-    OCTOMAP_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OCTOMAP_srv_CB, this);
+    OCTOMAP_srv_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OCTOMAP_srv_CB, this);
   }
   int wait=0;///////////
   while(!OCTOMAP_rcvd_ && wait<10){///////////
@@ -607,7 +615,9 @@ bool SphereDiscretization::getOCTOMAP(std::string topic, float res){
     ros::Duration(0.1).sleep();
     ros::spinOnce();
   }
-  OCTOMAP_sub_.shutdown();
+  if(OCTOMAP_srv_filt_){
+    OCTOMAP_srv_sub_.shutdown();
+  }
   if(wait==10){////////////review
     ROS_ERROR("TIMEDOUT ON WAITING FOR %s", topic.c_str());
     return false;
@@ -672,32 +682,23 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
       ////ROS_INFO("///// OCTOMAP_srv_filt_");
       if(!arm_pose){ // If I have robot base poses i should use the projected map of the octomap to filter, it is a 2D OGM
         OGM2d_cost_lim_=50; // octomap /projected_map contains "binary" values of 0 and 100
-        ////ROS_INFO("///// arm_pose false chiamo getOGM2d");
+        ////ROS_INFO("///// arm_pose false");
         if(!SphereDiscretization::getOGM2d("/projected_map")){
           return;
         }
       }else{
-        ////ROS_INFO("/////// arm_pose true chiamo getOCTOMAP");
+        ////ROS_INFO("/////// arm_pose true");
         nh.getParam("OCTOMAP_srv_topic", OCTOMAP_srv_topic_);
-        if(!SphereDiscretization::getOCTOMAP(OCTOMAP_srv_topic_, resolution)){
+        if(!SphereDiscretization::getOCTOMAP(OCTOMAP_srv_topic_)){
           return;
         }
       }
     }
 
     if(OCTOMAP_PS_filt_){
-      ROS_INFO("///// OCTOMAP_PS_filt_");
-      if(!arm_pose){ // If I have robot base poses i should use the projected map of the octomap to filter, it is a 2D OGM 
-        //OGM2d_cost_lim_ //// not sure wat value to set it to 
-        ROS_INFO("///// arm_pose false chiamo getOGM2d");
-        if(!SphereDiscretization::getOGM2d("/projected_map")){ ///// make sure it works in this case
-          return;
-        }
-      }else{
-        ROS_INFO("/////// arm_pose true chiamo getOCTOMAP");
-        if(!SphereDiscretization::getOCTOMAP("/move_group/monitored_planning_scene",resolution)){
-          return;
-        }
+     // ROS_INFO("///// OCTOMAP_PS_filt_");
+      if(!SphereDiscretization::getOCTOMAP("/get_planning_scene")){
+        return;
       }
     }
 
@@ -829,17 +830,7 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
             continue; //// skip the rest of the for cycle code = don't store the pose into trns_col and cloud
           } 
       }
-      
-      /*if(OCTOMAP_rcvd_){ // FILTERING WITH AN OCTOMAP 
-        //// VERSIONE NO ELABORAZIONE EXTRA
-        octomap::point3d point_to_check(new_trans_vec[0], new_trans_vec[1], new_trans_vec[2]);
-        // Find the node corresponding to that point
-        octomap::OcTreeNode* node = collision_octree_->search(point_to_check);
-        if(!node || collision_octree_->isNodeOccupied(node)){
-            continue;
-        }
-      }*/
-      
+
       std::vector< float > position;
       position.reserve(3);
       position.push_back(new_trans_vec[0]);
@@ -889,15 +880,7 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
     bool isInBox = (searchPoint.x >= min_x && searchPoint.x <= max_x) && (searchPoint.y >= min_y && searchPoint.y <= max_y) && (searchPoint.z >= min_z && searchPoint.z <= max_z);
     ROS_DEBUG("Point is in box: %d", isInBox);
 
-    if (isInBox){
-      if(OCTOMAP_rcvd_){ // FILTERING WITH AN OCTOMAP - filter the nodes in space that are accupied (before checking if they "contain" possible base poses)
-        octomap::point3d point_to_check(searchPoint.x, searchPoint.y, searchPoint.z);
-        // Find the node corresponding to that point
-        octomap::OcTreeNode* node = collision_octree_->search(point_to_check);
-        if(!node || collision_octree_->isNodeOccupied(node)){
-            continue;
-        }  
-      }
+    if (isInBox){      
       if(OGM2d_rcvd_ and !arm_pose ){ // FILTERING WITH OCCUPANCY GRID MAP FOR ARM POSES
         // Convert world coordinates to map indices
         int mx = static_cast<int>((searchPoint.x  - ogm_2d_.info.origin.position.x) / ogm_2d_.info.resolution);
@@ -927,7 +910,29 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
         voxel_pos.push_back(searchPoint.x);
         voxel_pos.push_back(searchPoint.y);
         voxel_pos.push_back(searchPoint.z);
-
+        if(OCTOMAP_rcvd_){ // FILTERING WITH AN OCTOMAP - filter the nodes in space that are accupied (before checking if they "contain" possible base poses)
+          if(arm_pose){ // Find the node corresponding to that point 
+            octomap::OcTreeNode* node = collision_octree_->search(searchPoint.x, searchPoint.y, searchPoint.z);
+            if(!node || collision_octree_->isNodeOccupied(node)){
+                continue;
+            }  
+          }else{ // this case happens with PLANNING SCENE filtering and VERTICALROBOTMODEL method 
+            bool collision = false;
+            double coll_tree_res = collision_octree_->getResolution();
+            double mx,my,max_z;
+            collision_octree_->getMetricMax(mx, my, max_z);
+            for (double i = coll_tree_res*1.25; i < max_z; i+=coll_tree_res){
+              octomap::OcTreeNode* node = collision_octree_->search(searchPoint.x, searchPoint.y, i);
+              if(node && collision_octree_->isNodeOccupied(node)){
+                collision = true;
+                break;
+              }
+            }
+            if(collision){
+              continue;
+            }
+          }
+        }
         for (size_t j = 0; j < pointIdxVec.size(); ++j){ // For a given voxel, add all base poses to the multimap for later retreival
           // Get the base pose for a given index found in a voxel
           std::vector< double > base_pose;

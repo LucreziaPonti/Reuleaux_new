@@ -78,3 +78,8 @@ Launch the server and visualize it in rviz, once the map is completed to your sa
 - OCTOMAP VISUALIZATION: in the launch use the arg *rviz* to open a new rviz window with the visualization of the octomap
 - GROUND FILTERING: in many applications - such as this - the ground needs to not be considered as an obstacle. Setting the param *filter_ground* to true allows to do that (see the official wikis for a better explanation on how this is done), other parameter are used to adjust the ground detection method. 
 
+### Load octomap to planning scene
+Build the octomap in the planning scene takes time and requires the robot to move around a lot: move_group provides a service to load a (binary) prebuilt octomap to the planning scene:
+```
+rosservice call /move_group/load_map "filename: '/full/absolute/path/to/the/map/<map name>.bt'"
+```
