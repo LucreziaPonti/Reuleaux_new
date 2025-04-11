@@ -276,21 +276,21 @@ TEST: OCTOMAP from PLANNING SCENE (with perception pipeline + static map loaded)
 useful to check the filtering time without the "prefiltering" of the tiago
 
     RESULT: 
-    [ INFO] [1744362911.708889662, 248.810000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
-    [ INFO] [1744362911.756688426, 248.833000000]: Octomap received from /get_planning_scene service
-    [ INFO] [1744362912.570994581, 249.226000000]: //////////////////////////// dimensione for graspxIRM = 143778
-    [ INFO] [1744362912.571282874, 249.226000000]: //////////////////////////// trns_col size = 143778
-    [ INFO] [1744362912.571291653, 249.226000000]: //////////////////////////// for spCenter = 225264
-    [ INFO] [1744362912.571302838, 249.227000000]: //////////////////////////// sfere per cui fa il voxel search = 28672
-    [ INFO] [1744362912.592437147, 249.235000000]: Time for AssociatePose: 883 ms
-    [ INFO] [1744362912.592529987, 249.235000000]: Size of baseTrnsCol dataset: 93622
-    [ INFO] [1744362913.374687134, 249.631000000]: Time for CreateSpheres: 781 ms
-    [ INFO] [1744362913.374744177, 249.631000000]: Union map has been created. Can now visualize Union Map.
-    [ INFO] [1744362913.374762288, 249.631000000]: Poses in Union Map: 93622
-    [ INFO] [1744362913.374795387, 249.631000000]: Spheres in Union Map: 5176
-    [ INFO] [1744362913.374817128, 249.631000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+    [ INFO] [1744368859.698939032, 622.367000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1744368859.745238148, 622.387000000]: Octomap received from /get_planning_scene service
+    [ INFO] [1744368860.690988151, 622.878000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1744368860.691017009, 622.878000000]: //////////////////////////// trns_col size = 143778
+    [ INFO] [1744368860.691034029, 622.878000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1744368860.691051412, 622.878000000]: //////////////////////////// sfere per cui fa il voxel search = 28672
+    [ INFO] [1744368860.706912154, 622.889000000]: Time for AssociatePose: 1007 ms
+    [ INFO] [1744368860.706972212, 622.889000000]: Size of baseTrnsCol dataset: 140781
+    [ INFO] [1744368861.802219423, 623.469000000]: Time for CreateSpheres: 1095 ms
+    [ INFO] [1744368861.802462098, 623.469000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1744368861.802613281, 623.469000000]: Poses in Union Map: 140781
+    [ INFO] [1744368861.802808307, 623.469000000]: Spheres in Union Map: 7169
+    [ INFO] [1744368861.803015755, 623.469000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
 
-    Time for FindBase: 6118 ms
+    Time for FindBase: 6580 ms
     
     POSES OBTAINED: 
     [ INFO] [1744362917.380419330, 251.836000000]: Optimal base pose[1]: (1.14, -1.50, 1.62) (0.31, 0.36, 0.54, 0.70) - Score: 100.00
@@ -308,22 +308,21 @@ TEST: OCTOMAP from PLANNING SCENE (NO perception pipeline - ONLY static map load
 useful to check the filtering time without the "prefiltering" of the tiago
 
     RESULT: 
-    [ INFO] [1744362620.070524477, 413.206000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
-    [ INFO] [1744362620.127331360, 413.239000000]: Octomap received from /get_planning_scene service
-    [ INFO] [1744362621.057792602, 413.819000000]: //////////////////////////// dimensione for graspxIRM = 143778
-    [ INFO] [1744362621.058007897, 413.819000000]: //////////////////////////// trns_col size = 143778
-    [ INFO] [1744362621.058134419, 413.820000000]: //////////////////////////// for spCenter = 225264
-    [ INFO] [1744362621.058219221, 413.820000000]: //////////////////////////// sfere per cui fa il voxel search = 28672
-    [ INFO] [1744362621.077404105, 413.826000000]: Time for AssociatePose: 1006 ms
-    [ INFO] [1744362621.077620011, 413.826000000]: Size of baseTrnsCol dataset: 140781
-    [ INFO] [1744362622.184059939, 414.498000000]: Time for CreateSpheres: 1106 ms
-    [ INFO] [1744362622.184131311, 414.498000000]: Union map has been created. Can now visualize Union Map.
-    [ INFO] [1744362622.184161710, 414.498000000]: Poses in Union Map: 140781
-    [ INFO] [1744362622.184184444, 414.498000000]: Spheres in Union Map: 7169
-    [ INFO] [1744362622.184247942, 414.498000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+    [ INFO] [1744369112.374017639, 258.519000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1744369112.407945735, 258.540000000]: Octomap received from /get_planning_scene service
+    [ INFO] [1744369113.333774451, 259.110000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1744369113.333843128, 259.110000000]: //////////////////////////// trns_col size = 143778
+    [ INFO] [1744369113.333864161, 259.110000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1744369113.333887916, 259.110000000]: //////////////////////////// sfere per cui fa il voxel search = 28672
+    [ INFO] [1744369113.350497160, 259.120000000]: Time for AssociatePose: 976 ms
+    [ INFO] [1744369113.350575362, 259.120000000]: Size of baseTrnsCol dataset: 140781
+    [ INFO] [1744369114.422944487, 259.808000000]: Time for CreateSpheres: 1072 ms
+    [ INFO] [1744369114.422974831, 259.808000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1744369114.422986419, 259.808000000]: Poses in Union Map: 140781
+    [ INFO] [1744369114.422998519, 259.808000000]: Spheres in Union Map: 7169
+    [ INFO] [1744369114.423007443, 259.808000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
 
-
-    Time for FindBase: 6100 ms
+    Time for FindBase: 5868 ms
     
     POSES OBTAINED: 
     [ INFO] [1744362625.770349983, 416.707000000]: Optimal base pose[1]: (1.14, -1.50, 1.62) (0.31, 0.36, 0.54, 0.70) - Score: 100.00
@@ -332,5 +331,37 @@ useful to check the filtering time without the "prefiltering" of the tiago
     [ INFO] [1744362625.772725607, 416.707000000]: Optimal base pose[4]: (1.14, -1.18, 1.78) (0.04, 0.41, 0.66, 0.63) - Score: 100.00
     [ INFO] [1744362625.773520954, 416.707000000]: Optimal base pose[5]: (0.98, -1.02, 1.78) (0.08, 0.40, -0.70, 0.58) - Score: 100.00
     [ INFO] [1744362625.773545359, 416.707000000]: Best pose for this solution: (1.14, -1.50, 1.62) (0.31, 0.36, 0.54 , 0.70)
+
+    COMMENT ON RESULT VALIDITY: NOT VALID POSES FOR TIAGO but useful to check correct filtering and timing of the method
+
+TEST: OCTOMAP from octomap_server VIA SERVICE - NO TIAGO ROBOT FILTERING (11Apr) 
+useful to check the filtering time without the "prefiltering" of the tiago
+!!!! time difference btwn getting the map from topic and getting it from srvs
+
+    RESULT: 
+    [ INFO] [1744369537.196957146, 533.608000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1744369537.231313307, 533.624000000]: Octomap received from /octomap_binary service
+    [ INFO] [1744369538.145321420, 534.187000000]: //////////////////////////// dimensione for graspxIRM = 143778
+    [ INFO] [1744369538.145448858, 534.187000000]: //////////////////////////// trns_col size = 143778
+    [ INFO] [1744369538.145479493, 534.187000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1744369538.145504083, 534.187000000]: //////////////////////////// sfere per cui fa il voxel search = 28672
+    [ INFO] [1744369538.162217664, 534.197000000]: Time for AssociatePose: 965 ms
+    [ INFO] [1744369538.162410932, 534.197000000]: Size of baseTrnsCol dataset: 140781
+    [ INFO] [1744369539.231121707, 534.879000000]: Time for CreateSpheres: 1068 ms
+    [ INFO] [1744369539.231260949, 534.879000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1744369539.231305488, 534.879000000]: Poses in Union Map: 140781
+    [ INFO] [1744369539.231329902, 534.879000000]: Spheres in Union Map: 7169
+    [ INFO] [1744369539.231373117, 534.879000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 5855 ms
+    
+        POSES OBTAINED: 
+    [ INFO] [1744369542.626661307, 537.101000000]: Optimal base pose[1]: (1.14, -1.50, 1.62) (0.31, 0.36, 0.54, 0.70) - Score: 100.00
+    [ INFO] [1744369542.627698383, 537.101000000]: Optimal base pose[2]: (1.14, -1.58, 1.62) (0.31, 0.36, 0.54, 0.70) - Score: 83.33
+    [ INFO] [1744369542.628533822, 537.101000000]: Optimal base pose[3]: (1.06, -1.58, 1.54) (0.52, 0.56, -0.23, 0.60) - Score: 100.00
+    [ INFO] [1744369542.629284073, 537.101000000]: Optimal base pose[4]: (1.14, -1.18, 1.78) (0.04, 0.41, 0.66, 0.63) - Score: 100.00
+    [ INFO] [1744369542.630027746, 537.101000000]: Optimal base pose[5]: (0.98, -1.02, 1.78) (0.08, 0.40, -0.70, 0.58) - Score: 100.00
+    [ INFO] [1744369542.630044745, 537.101000000]: Best pose for this solution: (1.14, -1.50, 1.62) (0.31, 0.36, 0.54 , 0.70)
+
 
     COMMENT ON RESULT VALIDITY: NOT VALID POSES FOR TIAGO but useful to check correct filtering and timing of the method

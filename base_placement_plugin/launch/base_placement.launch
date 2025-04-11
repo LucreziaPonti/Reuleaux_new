@@ -5,7 +5,6 @@
     <arg name = "bp_results" default="false"/>
     
     <arg name = "OCTOMAP_SRV_filtering" default="false"/>
-        <arg name = "OCTOMAP_srv_topic" default="/octomap_full"/>
     
     <arg name = "OCTOMAP_PS_filtering" default="false"/> 
 
@@ -22,7 +21,7 @@
     <param name="TIAGO_torso_filtering" value="$(arg TIAGO_torso_filtering)"/>
     
     <param name="OCTOMAP_SRV_filtering" value="$(arg OCTOMAP_SRV_filtering)"/>
-    <param name="OCTOMAP_srv_topic" value="$(arg OCTOMAP_srv_topic)"/>
+    
     <param name="OCTOMAP_PS_filtering" value="$(arg OCTOMAP_PS_filtering)"/>
 
     <param name="OGM2d_filtering" value="$(arg OGM2d_filtering)"/>

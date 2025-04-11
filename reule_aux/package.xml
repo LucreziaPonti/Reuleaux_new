@@ -41,7 +41,9 @@
 
   <build_depend>nav_msgs</build_depend>  
   <exec_depend>nav_msgs</exec_depend>
-
+  <build_depend>moveit_msgs</build_depend>  
+  <exec_depend>moveit_msgs</exec_depend>
+  
   <!-- The export tag contains other, unspecified, tags -->
   <export>
   </export>

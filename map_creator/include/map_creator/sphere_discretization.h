@@ -22,6 +22,7 @@
 
 #include <nav_msgs/OccupancyGrid.h>
 #include <octomap_msgs/Octomap.h>
+#include <octomap_msgs/GetOctomap.h>
 #include <moveit_msgs/PlanningScene.h>
 #include <moveit_msgs/GetPlanningScene.h> 
 #include <octomap_msgs/conversions.h>
@@ -153,20 +154,13 @@ private:
   int OGM2d_cost_lim_; // limit of the "cell"'s cost after which the point is filtered out 
   nav_msgs::OccupancyGrid ogm_2d_;
   void OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg);
-  bool getOGM2d(std::string topic);
 
   // octomap (form OCTOMAP_SERVER or from PLANNING SCENE)
   bool OCTOMAP_srv_filt_; // get octomap from octomap server
-  ros::Subscriber OCTOMAP_srv_sub_;
-  void OCTOMAP_srv_CB(const octomap_msgs::Octomap msg);
-  std::string OCTOMAP_srv_topic_;
-
   bool OCTOMAP_PS_filt_; // get octomap from planning scene
-  ros::ServiceClient OCTOMAP_ps_CL;
-  
-  bool getOCTOMAP(std::string topic);
+
+  ros::ServiceClient OCTOMAP_client_;
   bool OCTOMAP_rcvd_ = false;
-  octomap_msgs::Octomap octomap_;
   octomap::OcTree* collision_octree_;
 
 };

@@ -577,56 +577,6 @@ void SphereDiscretization::findOptimalPosebyAverage(const std::vector< geometry_
 }
 
 
-void SphereDiscretization::OCTOMAP_srv_CB(const octomap_msgs::Octomap msg){
-///  ROS_INFO("///// octomap cb");
-  if(msg.data.size() > 0){
-///    ROS_INFO("//////// ocotomap received");
-    octomap_ = msg;
-    OCTOMAP_rcvd_ = true;
-  }
-}
-bool SphereDiscretization::getOCTOMAP(std::string topic){
-///  ROS_INFO("///// getOCTOMAP STARTED");
-  OCTOMAP_rcvd_ = false;
-  if(OCTOMAP_PS_filt_){ // use a service call instead of a topic to get the planning scene  but ok
-    OCTOMAP_ps_CL = nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
-    moveit_msgs::GetPlanningScene srv;
-    srv.request.components.components = moveit_msgs::PlanningSceneComponents::OCTOMAP;
-    if (OCTOMAP_ps_CL.call(srv)) {
-      if (srv.response.scene.world.octomap.octomap.data.size() > 0) {
-        ROS_INFO("Octomap received from /get_planning_scene service");/////////
-        octomap_ = srv.response.scene.world.octomap.octomap;
-        OCTOMAP_rcvd_ = true;
-      } else {
-        ROS_WARN("Empty octomap received from /get_planning_scene service");
-        return false;
-      }
-    } else {
-      ROS_ERROR("Failed to call /get_planning_scene service");
-      return false;
-    }
-  }else{
-    OCTOMAP_srv_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OCTOMAP_srv_CB, this);
-  }
-  int wait=0;///////////
-  while(!OCTOMAP_rcvd_ && wait<10){///////////
-    ROS_INFO("waiting to receive octomap from %s - %d",topic.c_str(), wait);
-    wait+=1;
-    ros::Duration(0.1).sleep();
-    ros::spinOnce();
-  }
-  if(OCTOMAP_srv_filt_){
-    OCTOMAP_srv_sub_.shutdown();
-  }
-  if(wait==10){////////////review
-    ROS_ERROR("TIMEDOUT ON WAITING FOR %s", topic.c_str());
-    return false;
-  }else{ 
-    octomap::AbstractOcTree* abstract_tree = octomap_msgs::msgToMap(octomap_);
-    collision_octree_ = (octomap::OcTree*) abstract_tree;
-  } 
-  return true;
-}
 
 void SphereDiscretization::OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg){ 
   if(!OGM2d_rcvd_){
@@ -635,24 +585,6 @@ void SphereDiscretization::OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg
     ROS_INFO("Received global costmap with resolution: %f, size: %d x %d", ogm_2d_.info.resolution, ogm_2d_.info.width, ogm_2d_.info.height);
   }
 }
-bool SphereDiscretization::getOGM2d(std::string topic){
-  OGM2d_rcvd_ = false;
-  OGM2d_sub_ = nh.subscribe(topic, 1, &SphereDiscretization::OGM2d_CB, this);
-  int wait=0;///////////
-  while(!OGM2d_rcvd_ && wait<10){///////////
-    ROS_INFO("Waiting to receive occupancy grid map from %s - %d",topic.c_str(), wait);
-    wait+=1;
-    ros::Duration(0.1).sleep();
-    ros::spinOnce();
-  }
-  if(wait==10){////////////review
-    ROS_ERROR("TIMEDOUT ON WAITING FOR %s", topic.c_str());
-    return false;
-  }
-  OGM2d_sub_.shutdown();
-  return true;
-}
-
 
 void SphereDiscretization::associatePose(std::multimap< std::vector< double >, std::vector< double > >& baseTrnsCol,
                                          const std::vector< geometry_msgs::Pose >& grasp_poses,
@@ -679,36 +611,67 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
 // setup the filtering data depending on the filtering used
 
     if(OCTOMAP_srv_filt_){
-      ////ROS_INFO("///// OCTOMAP_srv_filt_");
-      if(!arm_pose){ // If I have robot base poses i should use the projected map of the octomap to filter, it is a 2D OGM
-        OGM2d_cost_lim_=50; // octomap /projected_map contains "binary" values of 0 and 100
-        ////ROS_INFO("///// arm_pose false");
-        if(!SphereDiscretization::getOGM2d("/projected_map")){
+      OCTOMAP_rcvd_ = false;
+      OCTOMAP_client_ = nh.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+      octomap_msgs::GetOctomap srv;
+      if (OCTOMAP_client_.call(srv)) {
+        if (srv.response.map.data.size() > 0) {
+          ROS_INFO("Octomap received from /octomap_binary service");/////////
+          octomap_msgs::Octomap octomap = srv.response.map;
+          octomap::AbstractOcTree* abstract_tree = octomap_msgs::msgToMap(octomap);
+          collision_octree_ = (octomap::OcTree*) abstract_tree;
+          OCTOMAP_rcvd_ = true;
+        } else {
+          ROS_WARN("Empty octomap received from /octomap_binary service");
           return;
         }
-      }else{
-        ////ROS_INFO("/////// arm_pose true");
-        nh.getParam("OCTOMAP_srv_topic", OCTOMAP_srv_topic_);
-        if(!SphereDiscretization::getOCTOMAP(OCTOMAP_srv_topic_)){
-          return;
-        }
+      } else {
+        ROS_ERROR("Failed to call /octomap_binary service");
+        return ;
       }
     }
 
     if(OCTOMAP_PS_filt_){
-     // ROS_INFO("///// OCTOMAP_PS_filt_");
-      if(!SphereDiscretization::getOCTOMAP("/get_planning_scene")){
-        return;
+      OCTOMAP_rcvd_ = false;
+      OCTOMAP_client_ = nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+      moveit_msgs::GetPlanningScene srv;
+      srv.request.components.components = moveit_msgs::PlanningSceneComponents::OCTOMAP;
+      if (OCTOMAP_client_.call(srv)) {
+        if (srv.response.scene.world.octomap.octomap.data.size() > 0) {
+          ROS_INFO("Octomap received from /get_planning_scene service");/////////
+          octomap_msgs::Octomap octomap = srv.response.scene.world.octomap.octomap;
+          octomap::AbstractOcTree* abstract_tree = octomap_msgs::msgToMap(octomap);
+          collision_octree_ = (octomap::OcTree*) abstract_tree;
+          OCTOMAP_rcvd_ = true;
+        } else {
+          ROS_WARN("Empty octomap received from /get_planning_scene service");
+          return;
+        }
+      } else {
+        ROS_ERROR("Failed to call /get_planning_scene service");
+        return ;
       }
+      
     }
 
     if(OGM2d_filt_){ // if I want to use a 2-dimentional Occupancy Grid Map I need these parameters
       nh.getParam("OGM2d_cost_threshold",OGM2d_cost_lim_);
       nh.getParam("OGM2d_topic",OGM2d_topic_);
-      if(!SphereDiscretization::getOGM2d(OGM2d_topic_)){
+      OGM2d_rcvd_ = false;
+      OGM2d_sub_ = nh.subscribe(OGM2d_topic_, 1, &SphereDiscretization::OGM2d_CB, this);
+      int wait=0;///////////
+      while(!OGM2d_rcvd_ && wait<10){///////////
+        ROS_INFO("Waiting to receive occupancy grid map from %s - %d",OGM2d_topic_.c_str(), wait);
+        wait+=1;
+        ros::Duration(0.1).sleep();
+        ros::spinOnce();
+      }
+      if(wait==10){////////////review
+        ROS_ERROR("TIMEDOUT ON WAITING FOR %s", OGM2d_topic_.c_str());
         return;
       }
-//for now i only need it here but if i implement more methods it might make sense to move it outiside this if
+      OGM2d_sub_.shutdown();
+
       if(arm_pose){
         Eigen::Vector3d translation = arm_to_root_eigen.translation();
         Eigen::Quaterniond eigen_quaternion(arm_to_root_eigen.rotation());
@@ -790,7 +753,7 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
         }
       }
 
-      if(OGM2d_rcvd_ and arm_pose ){ // FILTERING WITH OCCUPANCY GRID MAP FOR ARM POSES
+      if(OGM2d_rcvd_ && arm_pose ){ // FILTERING WITH OCCUPANCY GRID MAP FOR ARM POSES 
         tf2::Vector3 check_trans_vec;
         /////if(arm_pose){ // i need to find the corresponding robot base pose to check the robot base pose against the costmap
           tf2::Transform robot_pose_trns;
@@ -916,7 +879,7 @@ void SphereDiscretization::associatePose(std::multimap< std::vector< double >, s
             if(!node || collision_octree_->isNodeOccupied(node)){
                 continue;
             }  
-          }else{ // this case happens with PLANNING SCENE filtering and VERTICALROBOTMODEL method 
+          }else{ // check the whole column of nodes in the octomap (kind of like checking the projection of the map onto the ground)
             bool collision = false;
             double coll_tree_res = collision_octree_->getResolution();
             double mx,my,max_z;

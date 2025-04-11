@@ -1,0 +1,11 @@
+<launch>
+    
+    <arg name="frame_id" default="map" />  <!-- fixed map frame (set to 'map' if SLAM or localization running!) - default="map" -->
+    <arg name="static_octomap_name" default="eut_kitchen.ot" />
+    <arg name="map_file" default="$(find reule_aux)/octomap_server_utils/maps/$(arg static_octomap_name)" />
+
+	<node pkg="octomap_server" type="octomap_server_static" name="octomap_srv_static" args="$(arg map_file)">
+        <param name="frame_id" type="string" value="$(arg frame_id)" />      
+	</node>
+
+</launch>

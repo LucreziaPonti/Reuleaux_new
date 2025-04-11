@@ -193,6 +193,27 @@ TEST: OCTOMAP from PLANNING SCENE (NO perception pipeline - ONLY static map load
     
     COMMENT on FILTERING: 
 
+TEST: OCTOMAP from octomap_server  VIA SERVICE- no robot filtering (11Apr)
+!!!! time difference btwn getting the map from topic and getting it from srvs
+
+    RESULT:
+    [ INFO] [1744370260.118650915, 1004.574000000]: //////////////////////// START UNION MAP CREATION ////////////////////////
+    [ INFO] [1744370260.180260369, 1004.605000000]: Octomap received from /octomap_binary service
+    [ INFO] [1744370261.691873254, 1005.547000000]: //////////////////////////// dimensione for graspxIRM = 287556
+    [ INFO] [1744370261.691994385, 1005.547000000]: //////////////////////////// trns_col size = 287556
+    [ INFO] [1744370261.692026332, 1005.547000000]: //////////////////////////// for spCenter = 225264
+    [ INFO] [1744370261.692046332, 1005.547000000]: //////////////////////////// sfere per cui fa il voxel search = 124108
+    [ INFO] [1744370261.727891875, 1005.566000000]: Time for AssociatePose: 1609 ms
+    [ INFO] [1744370261.727953465, 1005.566000000]: Size of baseTrnsCol dataset: 233146
+    [ INFO] [1744370263.552310367, 1006.727000000]: Time for CreateSpheres: 1824 ms
+    [ INFO] [1744370263.552370574, 1006.727000000]: Union map has been created. Can now visualize Union Map.
+    [ INFO] [1744370263.552402294, 1006.727000000]: Poses in Union Map: 233146
+    [ INFO] [1744370263.552415624, 1006.727000000]: Spheres in Union Map: 21852
+    [ INFO] [1744370263.552429070, 1006.727000000]: //////////////////////// END UNION MAP CREATION ////////////////////////
+
+    Time for FindBase: 7159 ms
+
+    COMMENT on FILTERING: 
 
 TEST: 
 

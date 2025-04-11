@@ -83,3 +83,5 @@ Build the octomap in the planning scene takes time and requires the robot to mov
 ```
 rosservice call /move_group/load_map "filename: '/full/absolute/path/to/the/map/<map name>.bt'"
 ```
+Since i find annoying to have to put the entire path down in the terminal, I created a little node **call_load_map** that only requires the name of the map you want to load.   
+!!! MAKE SURE TO FIX THE ABSOLUTE PATH INSIDE THE NODE THE FIRST TIME YOU USE IT
