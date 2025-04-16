@@ -21,6 +21,7 @@ The other packages used in this thesis work are:
 
 ## Differences from the original REPO
 *da aggiungere una volta concluso il lavoro - vedi note per idee*
+- map generator !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 - updated function **createMarker::updateRobotState** to update the full robot and not only the manipulator group (additional arg *arm_only* allows to choose to only update the manipulator insted of all the robot)
     - added to the functions *CreateMarker::getDefaultMarkers* (used by *add_robot_base* - the UserIntuition method - to create the robot interactive button), *PlaceBase::transformToRobotbase* (used to create the robot_base IRM for VerticalRobotModel metod) and *PlaceBase::transformFromRobotbaseToArmBase* 
@@ -32,19 +33,16 @@ The other packages used in this thesis work are:
 - ROS Noetic INSTALLATION: https://wiki.ros.org/noetic/Installation/Ubuntu
 - Install OTHER IMPORTANT PKGs : 
     ```
-    sudo apt-get install git wget ipython3 python3-catkin-tools python-is-python3 ros-noetic-rviz-visual-tools
+    sudo apt-get install git wget ipython3 python3-catkin-tools python-is-python3 ros-noetic-rviz-visual-tools ros-noetic-navigation ros-noetic-octomap
     ```
 - Install MOVEIT from pre-built binaries :  
     ```
     sudo apt install ros-noetic-moveit
     ```
-- Install "additional" PKGs - if needed:
-    ```
-    sudo apt install ros-noetic-navigation ros-noetic-octomap
-    ```
 - Create a workspace and clone the repository in the src folder 
-- ROBOT INFORMATION: for this package to work you will need a robot description packages, most important package is the *robot*_moveit_config package (make sure it is properly setup)
-- ** *at the moment* ** ROBOT SETUP: in map_creator>include>map_creator add the *robot*_ikfast_solver.cpp and add "#include *robot*_ikfast_solver.cpp" in the kinematics.h file 
+
+- ROBOT INFORMATION: for this package to work you will need a robot description packages, most important package is the *robot*_moveit_config package (make sure it is properly setup - see reule_aux and base_placement_plugin README for + info on how it will be used)
+- additional ROBOT SETUP - if you want to use IKFast directly: in map_generator>include>map_generator add the *robot*_ikfast_solver.cpp and add "#include *robot*_ikfast_solver.cpp" in the kinematics.h file 
 - correct the Launch files with the right information for the robot you want to use with the base placement plugin.
 
 
@@ -52,8 +50,7 @@ The other packages used in this thesis work are:
 !!! For all packages refer to their own README pages. This is just an overview:
 - **reuleaux**: is a metapackage useful for building;
 - **workspace_visualization**: contains the "setup" for the visualization of all the maps (RM, IRM, UM), the icons and the plugin descriton of the custom display
-- *map_creator*: contains the tools to create, load and visualize the RM and IRM; (as is it uses directly IKFast for the computation - no self-collision check)
-- *map_generation*: contains a node that allows to create the REACHABILITY MAP exploiting MoveIt!, to perform self-collision checks; It relies of map_creator for the computation of the IRM and the visualization of all maps;
+- **map_generator**: the nodes to create and visualize the Reachability Map and Inverse Reachability Map - the RM computation can be done either using IKFast directly or through MoveIt! (to have the self-collision checks);  
 - **base_placement_plugin**: is the main package of the repository, it contains the plugin for Rviz that allows to create the task and compute the base placement of the robot. 
 - **reule_aux**: new auxiliary package which contains the definition of new msgs (like reule_aux/bp_results used in the BPP) and nodes useful for a better use of the repo in a complete simulation
 

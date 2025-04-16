@@ -5,7 +5,7 @@
     <arg name = "fixed_frame" default="odom"/>
     <arg name="bp_results" default="false"/>
 
-    <!--PARAMETERS FOR THE FILTERING of the union map - used within sphere_discretization::associatePose-->
+    <!--PARAMETERS FOR THE FILTERING of the union map - used within map_generator>discretization::associatePose-->
     <arg name = "OCTOMAP_SRV_filtering" default="false"/>
     
     <arg name = "OCTOMAP_PS_filtering" default="false"/> 

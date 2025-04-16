@@ -17,7 +17,7 @@
 <!-- ********************************************  PARAMETERS  **********************************************************-->
 
     <param name="BPP_fixed_frame" value="$(arg fixed_frame)" />
-    <!--PARAMETERS FOR THE FILTERING of the union map - used within sphere_discretization::associatePose-->
+    <!--PARAMETERS FOR THE FILTERING of the union map - used within map_generator>discretization::associatePose-->
     <param name="TIAGO_torso_filtering" value="$(arg TIAGO_torso_filtering)"/>
     
     <param name="OCTOMAP_SRV_filtering" value="$(arg OCTOMAP_SRV_filtering)"/>

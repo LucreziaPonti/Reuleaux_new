@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   tf
   tf_conversions
-  map_creator
+  map_generator
   pcl_ros
   moveit_ros_planning_interface
   moveit_core
@@ -86,7 +86,7 @@ catkin_package(
   rqt_gui_cpp
   rviz
   visualization_msgs
-  map_creator
+  map_generator
   reule_aux
   moveit_core
   moveit_ros_planning_interface

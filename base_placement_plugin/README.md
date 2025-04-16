@@ -71,7 +71,7 @@ For how the computation is done not all visualization methods can be used with a
 The creation of the union map is one of the first steps of the computation of the optimal base placement.  
 It is done by combining "instances" of the IRM positioned in each of the grasp/task poses.  
 However not all base poses might be actually feasible, so it is necessary to perform a filtering, and it is best to be done in the first steps of the creation of the UM so to reduce right away the number of poses considered (thus reducing the time required for the computation).  
-The step of the "combination of the IRMs" is done in the function associatePose of sphere_discretization.cpp in **Map_Creator** (or map_generator), this is where the filtering has been added.
+The step of the "combination of the IRMs" is done in the function associatePose of discretization.cpp in **Map_generator**, this is where the filtering has been added.
 
 Multiple "types" of filtering have to (and can) be performed, depending on the resolution method chosen and of the resources available:
 

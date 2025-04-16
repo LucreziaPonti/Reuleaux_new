@@ -24,7 +24,7 @@
 #include<moveit/robot_state/robot_state.h>
 
 #include<base_placement_plugin/add_robot_base.h>
-#include <map_creator/sphere_discretization.h>
+#include <map_generator/discretization.h>
 
 #include <QObject>
 #include <QTimer>
@@ -236,7 +236,7 @@ protected:
   //Pointer for robot marker
   CreateMarker* mark_;
 
-  sphere_discretization::SphereDiscretization* sd_;
+  discretization::Discretization* sd_;
 };
 
 #endif  // PLACE_BASE_H_

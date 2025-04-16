@@ -5,7 +5,7 @@
     <description>
       Displays poses and spheres of reachability map
     </description>
-    <message_type>map_creator::WorkSpace</message_type>
+    <message_type>map_generator::WorkSpace</message_type>
   </class>
 
 </library>

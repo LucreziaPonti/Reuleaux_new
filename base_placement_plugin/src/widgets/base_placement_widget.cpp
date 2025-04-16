@@ -2,7 +2,7 @@
 #include <base_placement_plugin/point_tree_model.h>
 #include <base_placement_plugin/place_base.h>
 
-#include <map_creator/hdf5_dataset.h>
+#include <map_generator/hdf5_dataset.h>
 
 //#include <H5Cpp.h>
 //#include <hdf5.h>
@@ -689,8 +689,8 @@ void BasePlacementWidget::loadReachabilityFile()
     std::string fileh5 = fileName.toStdString();
     const char* FILE = fileh5.c_str();
 
-    MultiMap pose_col_filter;
-    MapVecDouble sp;
+    utility::MultiMap pose_col_filter;
+    utility::MapVecDouble sp;
     float res;
 
     hdf5_dataset::Hdf5Dataset h5file(FILE);
@@ -699,7 +699,7 @@ void BasePlacementWidget::loadReachabilityFile()
 
 
     std::multimap< std::vector< double >, double > sphere_col;
-    for(MapVecDouble::iterator it= sp.begin(); it!=sp.end();++it)
+    for(utility::MapVecDouble::iterator it= sp.begin(); it!=sp.end();++it)
     {
       std::vector<double> sphere_coord(3);
       sphere_coord[0] = it->first[0];

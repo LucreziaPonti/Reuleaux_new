@@ -122,7 +122,7 @@ void ReachMapDisplay::updateSphereSize()
   }
 }
 
-void ReachMapDisplay::processMessage(const map_creator::WorkSpace::ConstPtr& msg)
+void ReachMapDisplay::processMessage(const map_generator::WorkSpace::ConstPtr& msg)
 {
   Ogre::Quaternion orientation;
   Ogre::Vector3 position;

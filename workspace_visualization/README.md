@@ -1,6 +1,6 @@
 ## Workspace Visualization
 ====
-It is relatively very easy to visualize the map created in map_creator package. Please run rviz first in a terminal.
+It is relatively very easy to visualize the map created in map_generator package. Please run rviz first in a terminal.
 
 rosrun rviz rviz
 
