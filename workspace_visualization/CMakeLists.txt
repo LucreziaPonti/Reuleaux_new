@@ -28,9 +28,6 @@ add_definitions(-DQT_NO_KEYWORDS)
 set(SRC_FILES
   src/reachability_map_visual.cpp
   src/reachability_map_display.cpp
-  src/capability_map_visual.cpp
-  src/capability_map_display.cpp
-  
 )
 
 add_library(${PROJECT_NAME} ${SRC_FILES})
