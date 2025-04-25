@@ -43,7 +43,7 @@ void PlaceBase::init()
   if (nh_.getParam("BPP_fixed_frame", fixed_frame_)) {
       ROS_DEBUG("PB - Received fixed frame for plugin: %s", fixed_frame_.c_str());
   } else {
-      ROS_WARN("PB - Failed to get param 'param_name' - setting to defualt: 'world'");
+      ROS_WARN("PB - Failed to get param 'BPP_fixed_frame' - setting to defualt: 'world'");
       fixed_frame_ = "world"; ////////////////
   }
   //show_ureach_models_ = false;

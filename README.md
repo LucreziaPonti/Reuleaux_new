@@ -41,7 +41,8 @@ The other packages used in this thesis work are:
     ```
 - Create a workspace and clone the repository in the src folder 
 
-- ROBOT INFORMATION: for this package to work you will need a robot description packages, most important package is the *robot*_moveit_config package (make sure it is properly setup - see reule_aux and base_placement_plugin README for + info on how it will be used)
+- ROBOT INFORMATION: for this package to work you will need a robot description packages, most important package is the *robot*_moveit_config package (make sure it is properly setup - see reule_aux and base_placement_plugin README for + info on how it will be used)   
+    !!!! make sure to have a virtual_joint called "virtual_joint" that is either floating or planar, so that you will be able to move the robot around the planning scene
 - additional ROBOT SETUP - if you want to use IKFast directly: in map_generator>include>map_generator add the *robot*_ikfast_solver.cpp and add "#include *robot*_ikfast_solver.cpp" in the kinematics.h file 
 - correct the Launch files with the right information for the robot you want to use with the base placement plugin.
 

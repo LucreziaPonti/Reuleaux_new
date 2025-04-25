@@ -128,8 +128,8 @@ ros::init(argc, argv, "create_inverse_reachability_map");
     // Catch for resolution of zero
     if (res < 0.005) {
       ROS_ERROR("Resolution set lower than is practicable (0.005): %f", resolution);
-      ROS_INFO("Setting resolution to 0.15");
-      resolution = 0.15;
+      ROS_INFO("Setting resolution to 0.08");
+      resolution = 0.08;
     }
 
     ROS_INFO("Resolution: %f", resolution);
@@ -279,7 +279,7 @@ ros::init(argc, argv, "create_inverse_reachability_map");
    ROS_INFO("All the poses have Processed. Now saving data to a inverse Reachability Map.");
 
    hdf5_dataset::Hdf5Dataset irm_h5(filename);
-   irm_h5.saveReachData(base_trns_col, sphere_color, res);
+   irm_h5.saveReachData(base_trns_col, sphere_color, resolution);
 
 
    time(&finish);
