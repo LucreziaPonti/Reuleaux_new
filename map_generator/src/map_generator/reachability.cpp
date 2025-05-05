@@ -148,6 +148,9 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
     //ROS_INFO("getValidIKCount - robot state received:"); ////
     ////robot_state.printStateInfo();
 
+    std::vector<std::string> joint_names = group_->getJointNames();
+    const moveit::core::JointModelGroup* joint_model_group_ = robot_state.getJointModelGroup(group_name_);
+
     // The robot state received needs to be a VALID state
     // Create the new state for the virtual_joint - to be used in the robot state for the ik
     Eigen::Isometry3d base_pose_eigen;
@@ -176,10 +179,17 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
         vj_pos[6] = base_pose.orientation.w;
         ////ROS_DEBUG("getValidIKCount - vj_pos FLOATING = %f %f %f %f %f %f %f", vj_pos[0], vj_pos[1], vj_pos[2],vj_pos[3], vj_pos[4], vj_pos[5], vj_pos[6]);/////
     }
+    robot_state.setJointPositions("virtual_joint", vj_pos);
 
-    std::vector<std::string> joint_names = group_->getJointNames();
-    const moveit::core::JointModelGroup* joint_model_group_ = robot_state.getJointModelGroup(group_name_);
-    
+    if(joint_names[0]=="arm_1_joint"){ // //// MANINO PER FAR FUNZIONARE BENE CON ARM
+      const double* torso_val = robot_state.getJointPositions("torso_lift_joint");
+      std::vector<double> torso_val_vec;
+      torso_val_vec.push_back(double(torso_val[0]+base_pose.position.z));
+      robot_state.setJointPositions("torso_lift_joint", torso_val_vec);
+    }
+
+    robot_state.update();
+
     //Create and start the setup for the request
     moveit_msgs::PositionIKRequest req;
     geometry_msgs::PoseStamped pose_st;
@@ -198,7 +208,6 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
     {   
       // Update the robot state with random values for the manipulator joints and the base pose for the virtual joint
       robot_state.setToRandomPositions(joint_model_group_);
-      robot_state.setJointPositions("virtual_joint", vj_pos);
       robot_state.update();
       ////robot_state.printStateInfo();
       moveit::core::robotStateToRobotStateMsg(robot_state, req.robot_state); // insert the robot state in the request
@@ -249,6 +258,9 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
   {
     moveit::core::RobotState robot_state = *robot_state_ptr;
 
+    std::vector<std::string> joint_names = group_->getJointNames();
+    const moveit::core::JointModelGroup* joint_model_group_ = robot_state.getJointModelGroup(group_name_);
+
     // The robot state received needs to be a VALID state
     // Create the new state for the virtual_joint - to be used in the robot state for the ik
     Eigen::Isometry3d base_pose_eigen;
@@ -273,9 +285,20 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
         vj_pos[5] = base_pose.orientation.z;
         vj_pos[6] = base_pose.orientation.w;
     }
+    robot_state.setJointPositions("virtual_joint", vj_pos);
 
-    std::vector<std::string> joint_names = group_->getJointNames();
-    const moveit::core::JointModelGroup* joint_model_group_ = robot_state.getJointModelGroup(group_name_);
+    if(joint_names[0]=="arm_1_joint"){ // //// MANINO PER FAR FUNZIONARE BENE CON ARM
+      const double* torso_val = robot_state.getJointPositions("torso_lift_joint");
+      std::vector<double> torso_val_vec;
+      torso_val_vec.push_back(double(torso_val[0]+base_pose.position.z));
+      if(torso_val_vec[0]>0.34){
+        torso_val_vec[0]=0.34;
+      }
+      robot_state.setJointPositions("torso_lift_joint", torso_val_vec);
+    }
+
+    robot_state.update();
+
 
     //Create and start the setup for the request
     moveit_msgs::PositionIKRequest req;
@@ -293,7 +316,6 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
     {   
       // Update the robot state with random values for the manipulator joints and the base pose for the virtual joint
       robot_state.setToRandomPositions(joint_model_group_);
-      robot_state.setJointPositions("virtual_joint", vj_pos);
       robot_state.update();
       ////robot_state.printStateInfo();
       moveit::core::robotStateToRobotStateMsg(robot_state, req.robot_state); // insert the robot state in the request
