@@ -23,8 +23,9 @@
 #include<moveit/robot_model/joint_model_group.h>
 #include<moveit/robot_state/robot_state.h>
 
-#include<base_placement_plugin/add_robot_base.h>
+#include <base_placement_plugin/add_robot_base.h>
 #include <map_generator/discretization.h>
+#include <map_generator/reachability.h>
 
 #include <QObject>
 #include <QTimer>
@@ -60,6 +61,7 @@ public:
 private:
   ros::NodeHandle nh_;
   std::string fixed_frame_;
+  bool use_IKFast_;
   std::string robot_root_link_name_;
   std::string arm_base_link_name_;
   std::string arm_root_link_name_;
@@ -237,6 +239,7 @@ protected:
   CreateMarker* mark_;
 
   discretization::Discretization* sd_;
+  reachability::ReachAbility* reach_;
 };
 
 #endif  // PLACE_BASE_H_

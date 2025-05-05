@@ -64,7 +64,7 @@ add_library(map_generation  src/${PROJECT_NAME}/map_generation.cpp)
 add_dependencies(discretization map_generator_generate_messages_cpp)
 add_dependencies(utility map_generator_generate_messages_cpp)
 
-target_link_libraries(discretization  ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(discretization  ${catkin_LIBRARIES} utility reachability ${OCTOMAP_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(kinematics  ${catkin_LIBRARIES} utility -llapack)
 target_link_libraries(utility  ${catkin_LIBRARIES})
 target_link_libraries(reachability  ${catkin_LIBRARIES} utility)

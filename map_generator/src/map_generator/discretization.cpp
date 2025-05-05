@@ -209,9 +209,14 @@ void Discretization::OGM2d_CB(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 void Discretization::associatePose(std::multimap< std::vector< double >, std::vector< double > >& baseTrnsCol,
                                          const std::vector< geometry_msgs::Pose >& grasp_poses,
                                          const std::multimap< std::vector< double >, std::vector< double > >& PoseColFilter,
-                                         const float resolution, const bool arm_pose, const Eigen::Affine3d arm_to_root_eigen)
+                                         const float resolution, const bool arm_pose, const Eigen::Affine3d arm_to_root_eigen,
+                                         const std::string planning_group, moveit::core::RobotStatePtr robot_state_ptr)
 {
 // retreive the parameters to choose the type of filtering  
+    if (!nh.getParam("IKValid_filtering", IKValid_filt_)) {
+      ROS_WARN("associatePose - Failed to get param 'IKValid_filt_' - setting to defualt: 'false'");
+      IKValid_filt_ = false;
+    }
     if (!nh.getParam("OCTOMAP_SRV_filtering", OCTOMAP_srv_filt_)) {
       ROS_WARN("associatePose - Failed to get param 'OCTOMAP_srv_filt_' - setting to defualt: 'false'");
       OCTOMAP_srv_filt_ = false;
@@ -229,6 +234,16 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
       TIAGO_torso_filt_ = false;
     }
 // setup the filtering data depending on the filtering used
+
+    reachability::ReachAbility reach(nh, planning_group, true);
+    
+    if(arm_pose){
+      Eigen::Vector3d translation = arm_to_root_eigen.translation();
+      Eigen::Quaterniond eigen_quaternion(arm_to_root_eigen.rotation());
+      // Convert to tf2::Transform to use into associatePose for the filtering
+      arm_to_root_tf_.setOrigin(tf2::Vector3(translation.x(), translation.y(), translation.z()));
+      arm_to_root_tf_.setRotation(tf2::Quaternion(eigen_quaternion.x(), eigen_quaternion.y(), eigen_quaternion.z(), eigen_quaternion.w()));
+    }
 
     if(OCTOMAP_srv_filt_){
       OCTOMAP_rcvd_ = false;
@@ -291,14 +306,6 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
         return;
       }
       OGM2d_sub_.shutdown();
-
-      if(arm_pose){
-        Eigen::Vector3d translation = arm_to_root_eigen.translation();
-        Eigen::Quaterniond eigen_quaternion(arm_to_root_eigen.rotation());
-        // Convert to tf2::Transform to use into associatePose for the filtering
-        arm_to_root_tf_.setOrigin(tf2::Vector3(translation.x(), translation.y(), translation.z()));
-        arm_to_root_tf_.setRotation(tf2::Quaternion(eigen_quaternion.x(), eigen_quaternion.y(), eigen_quaternion.z(), eigen_quaternion.w()));
-      }
     }
 
   unsigned char maxDepth = 16;
@@ -352,21 +359,44 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
         if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
           //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);////
           continue;
+        }else{// adjust orientation to vertical 
+          double roll, pitch, yaw;
+          tf2::Matrix3x3(new_trans_quat).getRPY(roll, pitch, yaw);
+          tf2::Quaternion q_new;
+            q_new.setRPY(0, 0, yaw);
+            q_new.normalize();
+            new_trans_quat = q_new;
+            new_trns.setRotation(new_trans_quat);
         }
         //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);////
 
       }else{ // arm base pose (other methods)
+        if((new_trans_vec[2]<-resolution)){ // remove positions that are below ground (with some allowance)
+          continue;           
+        }
         if(TIAGO_torso_filt_){ //// extra robot specific filtering
-          if((new_trans_vec[2]>1.232||new_trans_vec[2]<0.89)){ //outside robot's fisical boundaries (torso_lift_link's height)
-            continue;           
+          if(planning_group=="arm"){
+            if((new_trans_vec[2]>1.232||new_trans_vec[2]<0.89)){ //outside robot's fisical boundaries (torso_lift_link's height)
+              continue;           
+            }
           }
           //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
-          double tolerance = 0.2; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
+          double tolerance = 0.3; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
           tf2::Matrix3x3 rotation_matrix(new_trans_quat);
           tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector then check it is close to vertical 
           if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
             //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]); /////
             continue;
+          }else{// adjust orientation to vertical 
+            if(IKValid_filt_){ /////////////////////////////////////////
+              double roll, pitch, yaw;
+              tf2::Matrix3x3(new_trans_quat).getRPY(roll, pitch, yaw);
+              tf2::Quaternion q_new;
+              q_new.setRPY(0, 0, yaw);
+              q_new.normalize();
+              new_trans_quat = q_new;
+              new_trns.setRotation(new_trans_quat);
+            }
           }
         //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]); /////
         }
@@ -460,7 +490,6 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
     // Check that the search point is valid
     // https://github.com/ros-industrial-consortium/reuleaux/issues/68
     bool isInBox = (searchPoint.x >= min_x && searchPoint.x <= max_x) && (searchPoint.y >= min_y && searchPoint.y <= max_y) && (searchPoint.z >= min_z && searchPoint.z <= max_z);
-    ROS_DEBUG("Point is in box: %d", isInBox);
 
     if (isInBox){      
       if(OGM2d_rcvd_ and !arm_pose ){ // FILTERING WITH OCCUPANCY GRID MAP FOR ARM POSES
@@ -517,18 +546,56 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
         }
         for (size_t j = 0; j < pointIdxVec.size(); ++j){ // For a given voxel, add all base poses to the multimap for later retreival
           // Get the base pose for a given index found in a voxel
-          std::vector< double > base_pose;
-          base_pose.reserve(3);
-          base_pose.push_back(voxel_pos[0]);
-          base_pose.push_back(voxel_pos[1]);
-          base_pose.push_back(voxel_pos[2]);
+          std::vector< double > base_pose_vec;
+          base_pose_vec.reserve(3);
+          std::vector< float > position = trns_col[pointIdxVec[j]].first;
+          //base_pose_vec.push_back(double(position[0]));
+          //base_pose_vec.push_back(double(position[1]));
+          //base_pose_vec.push_back(double(position[2]));
+          base_pose_vec.push_back(voxel_pos[0]);
+          base_pose_vec.push_back(voxel_pos[1]);
+          base_pose_vec.push_back(voxel_pos[2]);
           std::vector< float > orientation = trns_col[pointIdxVec[j]].second;
-          base_pose.push_back(double(orientation[0]));
-          base_pose.push_back(double(orientation[1]));
-          base_pose.push_back(double(orientation[2]));
-          base_pose.push_back(double(orientation[3]));
+          base_pose_vec.push_back(double(orientation[0]));
+          base_pose_vec.push_back(double(orientation[1]));
+          base_pose_vec.push_back(double(orientation[2]));
+          base_pose_vec.push_back(double(orientation[3]));
 
-          baseTrnsCol.insert(std::pair< std::vector< double >, std::vector< double > >(voxel_pos, base_pose));
+          // FILTER OUT POSES DON'T GIVE A VALID JOINT SOLUTION
+          if(IKValid_filt_){
+            //if(!use_IKFast_)   -  IRL i should always be able to use this bc i always have moveit going anyway
+            geometry_msgs::Pose base_pose;
+
+            if(arm_pose){ // if it is a arm base pose then I need to transform it to the robot base pose
+              tf2::Vector3 vec(base_pose_vec[0], base_pose_vec[1], base_pose_vec[2]);
+              tf2::Quaternion quat(base_pose_vec[3], base_pose_vec[4], base_pose_vec[5], base_pose_vec[6]);
+              tf2::Transform trns;
+              trns.setOrigin(vec);
+              trns.setRotation(quat);
+              tf2::Transform robot_pose_trns;
+              robot_pose_trns = trns*arm_to_root_tf_;
+              tf2::Vector3 robot_vec = robot_pose_trns.getOrigin();
+              tf2::Quaternion robot_quat = robot_pose_trns.getRotation();
+              robot_quat.normalize();
+              base_pose.position.x = robot_vec[0];
+              base_pose.position.y = robot_vec[1];
+              base_pose.position.z = robot_vec[2];
+              base_pose.orientation.x = robot_quat[0];
+              base_pose.orientation.y = robot_quat[1];
+              base_pose.orientation.z = robot_quat[2];
+              base_pose.orientation.w = robot_quat[3];
+            }else{ // if it is a robot base pose
+              utility::vectorToPose(base_pose_vec, base_pose);
+            }
+            std::vector<double> sol = reach.getValidIKSol(base_pose, robot_state_ptr, grasp_poses[i]);
+            if(sol.size() == 0){
+              continue; // no valid IK solution
+            }else if (sol.size()==1){ // meaning it is = -999999
+              ROS_ERROR("associatePose - could not perform the IK check");
+              return;
+            }
+          }
+          baseTrnsCol.insert(std::pair< std::vector< double >, std::vector< double > >(voxel_pos, base_pose_vec));
         }
       }
     }

@@ -32,6 +32,9 @@
 #include <octomap/AbstractOcTree.h>
 
 
+#include <map_generator/utility.h>
+#include <map_generator/reachability.h>
+
 namespace discretization
 {
 
@@ -60,7 +63,8 @@ public:
   void associatePose(std::multimap<std::vector<double>, std::vector<double> > &baseTrnsCol,
     const std::vector< geometry_msgs::Pose >& grasp_poses,
     const std::multimap<std::vector<double>, std::vector<double> > &PoseColFilter, const float resolution, 
-    const bool arm_pose, const Eigen::Affine3d arm_to_root_eigen);
+    const bool arm_pose, const Eigen::Affine3d arm_to_root_eigen,
+    const std::string planning_group, moveit::core::RobotStatePtr robot_state_ptr);
 
 
   /*  //! Compare two vectors, of length 3, for multimap search ////////////non penso venga usato
@@ -91,6 +95,8 @@ private:
 // FILTERING OF UNION MAP IN ASSOCIATE POSES /////////////////////////////////
   ros::NodeHandle nh; 
   // PARAMETERS FOR THE FILTERING OF THE UNION MAP IN ASSOCIATEPOSES
+  bool IKValid_filt_; // to perform the IK request to check for valid IK solutions
+
   tf2::Transform arm_to_root_tf_;
   bool TIAGO_torso_filt_;
 

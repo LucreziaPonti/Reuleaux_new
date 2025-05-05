@@ -9,6 +9,14 @@
 #include <moveit_msgs/PositionIKRequest.h>
 #include <moveit/move_group_interface/move_group_interface.h>
 
+#include<moveit/robot_model/joint_model_group.h>
+#include<moveit/robot_state/robot_state.h>
+#include <moveit/robot_state/conversions.h>
+#include <geometry_msgs/Pose.h>
+#include<tf2/LinearMath/Quaternion.h>
+#include<tf2/LinearMath/Transform.h>
+#include <cmath>
+
 namespace reachability
 {
 class ReachAbility
@@ -17,11 +25,11 @@ public:
   ReachAbility(ros::NodeHandle& node, std::string group_name, bool check_collision);
   void setInitialWorkspace(const map_generator::WorkSpace& initial_ws);
   void getFinalWorkspace(map_generator::WorkSpace& final_ws);
-  bool getIKSolution(const geometry_msgs::Pose& pose, std::string ref_frame, moveit_msgs::RobotState& robot_state);
-
-  bool getIKSolution(const geometry_msgs::Pose &pose, std::string ref_frame, std::vector<double>& joint_solution);
-  
+  bool getIKSolution(const geometry_msgs::Pose& pose, std::string ref_frame, moveit_msgs::RobotState& robot_state);  
   bool createReachableWorkspace();
+
+  int getValidIKCount(const geometry_msgs::Pose base_pose, moveit::core::RobotStatePtr robot_state_ptr, const geometry_msgs::Pose grasp_pose);
+  std::vector<double> getValidIKSol(const geometry_msgs::Pose base_pose, moveit::core::RobotStatePtr robot_state_ptr, const geometry_msgs::Pose grasp_pose);
 
 
 private:

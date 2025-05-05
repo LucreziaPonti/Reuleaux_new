@@ -46,6 +46,12 @@ void PlaceBase::init()
       ROS_WARN("PB - Failed to get param 'BPP_fixed_frame' - setting to defualt: 'world'");
       fixed_frame_ = "world"; ////////////////
   }
+  if (nh_.getParam("use_IKFast", use_IKFast_)) {
+    ROS_DEBUG("PB - Received use_IKFast: %d", use_IKFast_);
+  } else {
+      ROS_WARN("PB - Failed to get param 'use_IKFast_' - setting to defualt: 'false' - make sure to have MoveIt running");
+      use_IKFast_ = false; ////////////////
+  }
   //show_ureach_models_ = false;
 }
 
@@ -290,7 +296,8 @@ void PlaceBase::createSpheres(std::multimap< std::vector< double >, std::vector<
 
 double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &grasp_poses, std::vector<geometry_msgs::Pose> &base_poses)
 {
-  kinematics::Kinematics k;
+  ROS_INFO("Calculating score for robot base: ");
+  kinematics::Kinematics kin;
   float total_score = 0;
   float max_score = 0;
   
@@ -302,17 +309,30 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
   ROS_DEBUG(" start calc score with %ld poses",base_poses.size());
   geometry_msgs::Pose best_pose;
   for(int i=0;i<base_poses.size();i++){
-    geometry_msgs::Pose base_pose_at_arm;
-    transformFromRobotbaseToArmBase(base_poses[i],transform_arm_to_root_.inverse(), base_pose_at_arm);
-    ROS_DEBUG("trasform base pose %d to arm pose",i);
     int num_of_solns = 0;
-    for(int j=0;j<grasp_poses.size();j++){
-      std::vector<double> joint_soln;
-      int nsolns = 0;
-      k.isIkSuccesswithTransformedBase(base_pose_at_arm, grasp_poses[j], joint_soln, nsolns);
-      num_of_solns +=nsolns;
+    int max_num_of_solns;
+    if(use_IKFast_){ // using kinematics
+      max_num_of_solns = 8;
+      geometry_msgs::Pose base_pose_at_arm;
+      transformFromRobotbaseToArmBase(base_poses[i],transform_arm_to_root_.inverse(), base_pose_at_arm);
+      ROS_DEBUG("trasform base pose %d to arm pose",i);
+      for(int j=0;j<grasp_poses.size();j++){
+        std::vector<double> joint_soln;
+        int nsolns = 0;
+        kin.isIkSuccesswithTransformedBase(base_pose_at_arm, grasp_poses[j], joint_soln, nsolns);
+        num_of_solns +=nsolns;
+      }
+    }else{ // using reachability
+      max_num_of_solns = 100 ; //////////////// SCORE REEVALUTION
+      for(int j=0;j<grasp_poses.size();j++){
+        int nsols= reach_->getValidIKCount(base_poses[i], robot_state_, grasp_poses[j]);
+        if(nsols==-999999){ //could not call the IKrequest service
+          return -999999;
+        }
+        num_of_solns += nsols;
+      }
     }
-    float d = (float(num_of_solns)/float(grasp_poses.size()*8))*100; //// review questo calcolo
+    float d = (float(num_of_solns)/float(grasp_poses.size()*max_num_of_solns))*100; //// review questo calcolo
     ROS_DEBUG("score of pose %d : %f",i,d);
     if(d>max_score){
       max_score = d;
@@ -352,7 +372,10 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
 
 double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &grasp_poses, std::vector<geometry_msgs::Pose> &base_poses)
 {
-  kinematics::Kinematics k;
+  
+  ROS_INFO("Calculating score for arm base: ");
+
+  kinematics::Kinematics kin;
   float total_score = 0;
   float max_score = 0;
 
@@ -364,15 +387,32 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
   for(int i=0;i<base_poses.size();i++)
   {
     int num_of_solns = 0;
-    for(int j=0;j<grasp_poses.size();j++)
-    {
-      std::vector<double> joint_soln;
-      int nsolns = 0;
-      k.isIkSuccesswithTransformedBase(base_poses[i], grasp_poses[j], joint_soln, nsolns);
-      num_of_solns +=nsolns;
+    int max_num_of_solns;
+    if(use_IKFast_){ // using kinematics
+      max_num_of_solns = 8;
+      for(int j=0;j<grasp_poses.size();j++){
+        std::vector<double> joint_soln;
+        int nsolns = 0;
+        kin.isIkSuccesswithTransformedBase(base_poses[i], grasp_poses[j], joint_soln, nsolns);
+        num_of_solns +=nsolns;
+      }
+    }else{ // using reachability
+      max_num_of_solns = 100 ; //////////////// SCORE REEVALUTION
+      // THIS FUNCTION REQUIRES THE ROBOT BASE POSE
+      Eigen::Affine3d arm_base_tf;
+      tf::poseMsgToEigen(base_poses[i], arm_base_tf);
+      geometry_msgs::Pose robot_base_pose;
+      tf::poseEigenToMsg(arm_base_tf*transform_arm_to_root_, robot_base_pose);
+      for(int j=0;j<grasp_poses.size();j++){
+        int nsols = reach_->getValidIKCount(robot_base_pose, robot_state_, grasp_poses[j]);
+        if(nsols==-999999){ //could not call the IKrequest service
+          return -999999;
+        }
+        num_of_solns += nsols;
+      }
     }
-    float d = (float(num_of_solns)/float(grasp_poses.size()*8))*100;
-    
+    float d = (float(num_of_solns)/float(grasp_poses.size()*max_num_of_solns))*100; //// review questo calcolo
+
     // publishing (publish all the poses as not the best - also the one that will be considered the best)
     bp_res.best_pose=false;
     bp_res.robot_root_frame=robot_root_link_name_;
@@ -522,6 +562,10 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
 
   reset_BP_result_node(); // to prepare the node move_to_bp_result to receive new values
 
+  if(!use_IKFast_){
+    //use reachability from map_generator
+    reach_ = new reachability::ReachAbility(nh_, selected_group_,true);
+  } // else use kinematics from og repo but it needs to be defined/created only when needed 
 
   if (grasp_poses.size() == 0)
     ROS_ERROR_STREAM("Please provide atleast one grasp pose.");
@@ -533,9 +577,12 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
     BasePlaceMethodHandler(); 
     // Here depending on the method is done the evaluation of the poses and the score is calculated
     // once the poses are found and the score is calculated the results are also published on the topic reule_aux/bp_results
-    ROS_INFO("Computation done. Start visualization");
-    OuputputVizHandler(final_base_poses);
-
+    if(score_!=-999999){
+      ROS_INFO("Computation done. Start visualization");
+      OuputputVizHandler(final_base_poses);
+    }else{
+      ROS_ERROR("Could not call the /compute_ik service - please check the service is running and the parameters are correct");
+    }
   }else  {
 
     if (PoseColFilter.size() == 0){
@@ -554,12 +601,13 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       ROS_INFO("//////////////////////// START UNION MAP CREATION ////////////////////////");
       if(selected_method_ == 3) {// findBaseByVerticalRobotModel 
         transformToRobotbase(PoseColFilter, transform_arm_to_root_, robot_PoseColfilter); // transforms IRM so that it contains robot base poses instead of arm base
-        sd_->associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res, false, transform_arm_to_root_); //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
+        //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
+        sd_->associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res, false, transform_arm_to_root_,selected_group_,robot_state_); 
     ////    ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
     ////    createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
       }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
         /*////////////*/std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now(); 
-        sd_->associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res, true, transform_arm_to_root_);
+        sd_->associatePose(baseTrnsCol, grasp_poses, PoseColFilter, res, true, transform_arm_to_root_,selected_group_,robot_state_);
         /*////////////*/std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); 
         /*////////////*/std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); 
         /*////////////*/ROS_INFO("Time for AssociatePose: %ld ms", AP.count());  
@@ -599,9 +647,12 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
             ROS_INFO("Optimal base pose[%d]: Position: %f, %f, %f, Orientation: %f, %f, %f", i + 1, final_base_poses[i].position.x, final_base_poses[i].position.y, final_base_poses[i].position.z, roll, pitch, yaw);
           }
         */
-        
-        ROS_INFO("Computation done. Start visualization");
-        OuputputVizHandler(final_base_poses);  // function to have different showBaseLocations methods
+        if(score_!=-999999){
+          ROS_INFO("Computation done. Start visualization");
+          OuputputVizHandler(final_base_poses);  // function to have different showBaseLocations methods
+        }else{
+          ROS_ERROR("Could not call the /compute_ik service - please check the service is running and the parameters are correct");
+        }
       }else{
         ROS_ERROR("NO POSES IN THE UNION MAP - no possible base poses - aborting computation");
         score_=-1;
@@ -696,7 +747,9 @@ void PlaceBase::findBaseByUserIntuition()
   ROS_INFO("Finding optimal base pose by user intuition.");
   double s = calculateScoreForRobotBase(GRASP_POSES_, final_base_poses_user);
   score_ = s;
-  final_base_poses = final_base_poses_user;
+  if(score_!=-999999){
+    final_base_poses = final_base_poses_user;
+  }
 }
 
 void PlaceBase::findBaseByVerticalRobotModel()
@@ -734,7 +787,9 @@ void PlaceBase::findBaseByVerticalRobotModel()
   }
   double s = calculateScoreForRobotBase(GRASP_POSES_, base_poses_user);
   score_ = s;
-  final_base_poses = base_poses_user;
+  if(score_!=-999999){
+    final_base_poses = base_poses_user;
+  }
 }
 
 void PlaceBase::findBaseByPCA()
@@ -769,6 +824,7 @@ void PlaceBase::findBaseByPCA()
 
   for (int i = 0; i < ws.WsSpheres.size(); ++i)
   {
+    ROS_INFO("PCA - Computing base pose %d/%d ....", i+1, ws.WsSpheres.size());
     geometry_msgs::Pose final_base_pose;
     
     sd_->findOptimalPosebyPCA(ws.WsSpheres[i].poses, final_base_pose);  // Calling the PCA..After the normalization the results seem suitable
@@ -796,7 +852,9 @@ void PlaceBase::findBaseByPCA()
 
   double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
   score_ = s;
-  final_base_poses = pose_scores;
+  if(score_!=-999999){
+    final_base_poses = pose_scores;
+  }
 }
 
 void PlaceBase::findBaseByGraspReachabilityScore()
@@ -811,12 +869,13 @@ void PlaceBase::findBaseByGraspReachabilityScore()
 
   */
   ROS_INFO("Finding optimal base pose by GraspReachabilityScore.");
-  kinematics::Kinematics kin;
+  kinematics::Kinematics kin; // will only be used if use_IKFast_ is true
   std::vector<geometry_msgs::Pose> pose_scores;
   int numofSp = BASE_LOC_SIZE_;
-
+ //////////// ROS_INFO("GRS - start");////
   for(int i=0;i<numofSp;i++)
   {
+    ROS_INFO("GRS - Computing base pose %d/%d ....", i+1, numofSp);
     std::vector< geometry_msgs::Pose > probBasePoses;
     std::multimap<std::vector<double>, std::vector<double> >::iterator it;
     for(it = baseTrnsCol.lower_bound(highScoreSp[i]); it != baseTrnsCol.upper_bound(highScoreSp[i]); ++it)
@@ -826,28 +885,51 @@ void PlaceBase::findBaseByGraspReachabilityScore()
       probBasePoses.push_back(pp);
              
     }
-    
+////////////    ROS_INFO("GRS - sphere %d : %f %f %f", i, highScoreSp[i][0], highScoreSp[i][1], highScoreSp[i][2]);////        
     std::map<int, geometry_msgs::Pose> basePoseWithHits;
     for(int j=0;j<probBasePoses.size();j++)
     {
       int numofHits = 0;
-      for(int j1=0;j1<GRASP_POSES_.size();j1++)
-      {
-        int nsolns = 0;
-        std::vector<double> joint_solns;
-        numofHits += kin.isIkSuccesswithTransformedBase(probBasePoses[j], GRASP_POSES_[j1],joint_solns, nsolns);
-       }
+
+      if(use_IKFast_){ // using kinematics
+        for(int j1=0;j1<GRASP_POSES_.size();j1++){
+          std::vector<double> joint_soln;
+          int nsolns = 0;
+          numofHits += kin.isIkSuccesswithTransformedBase(probBasePoses[j], GRASP_POSES_[j1], joint_soln, nsolns);
+        }
+      }else{ // using reachability
+        // THIS FUNCTION REQUIRES THE ROBOT BASE POSE
+        Eigen::Affine3d arm_base_tf;
+        tf::poseMsgToEigen(probBasePoses[j], arm_base_tf);
+        geometry_msgs::Pose robot_base_pose;
+        tf::poseEigenToMsg(arm_base_tf*transform_arm_to_root_, robot_base_pose);
+        for(int j1=0;j1<GRASP_POSES_.size();j1++){
+          std::vector<double> joint_soln = reach_->getValidIKSol(robot_base_pose, robot_state_, GRASP_POSES_[j1]);
+          if(joint_soln.size() == 1){ // means i got the error msg - could not call the IKrequest service
+            score_=-999999; // to signal the error outside the function
+            return;
+          }else if (joint_soln.size() != 0) { // if 0 then no solution if more than 1 then i have a solution = a hit 
+            numofHits += 1; 
+          }
+        }
+      }
+      ///// MAYBE ADD IF NUMOFHITS!=0 TO ADD THE POSE TO THE MAP
       basePoseWithHits.insert(std::make_pair(numofHits, probBasePoses[j]));
+////////////      ROS_INFO("GRS sphere %d - pose %d : %f %f %f - hits: %d", i, j, probBasePoses[j].position.x, probBasePoses[j].position.y, probBasePoses[j].position.z, numofHits);////
     }
     std::map<int, geometry_msgs::Pose>::iterator itr;
     itr = basePoseWithHits.end();
     --itr;
     pose_scores.push_back(itr->second);
     
+    ROS_INFO("GRS sphere %d - best pose: %f %f %f - hits: %d", i, itr->second.position.x, itr->second.position.y, itr->second.position.z, itr->first);//// 
   }
+////////////  ROS_INFO("GRS - call calculate score");////
   double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
   score_ = s;
-  final_base_poses = pose_scores;
+  if(score_!=-999999){
+    final_base_poses = pose_scores;
+  }
 }
 
 void PlaceBase::findBaseByIKSolutionScore()
@@ -866,11 +948,9 @@ void PlaceBase::findBaseByIKSolutionScore()
   std::vector<geometry_msgs::Pose> pose_scores;
   int numofSp = BASE_LOC_SIZE_;
 
-  int max_solns = GRASP_POSES_.size() * 8;
-  int min_solns = 0;
-
   for(int i=0;i<numofSp;i++)
   {
+    ////ROS_INFO("Base pose %d/%d ....", i+1, numofSp);
     std::vector< geometry_msgs::Pose > probBasePoses;
     std::multimap<std::vector<double>, std::vector<double> >::iterator it;
     for(it = baseTrnsCol.lower_bound(highScoreSp[i]); it != baseTrnsCol.upper_bound(highScoreSp[i]); ++it)
@@ -881,29 +961,53 @@ void PlaceBase::findBaseByIKSolutionScore()
        
     }
     
-    std::map<double, geometry_msgs::Pose> basePoseWithHits;
+    std::map<double, geometry_msgs::Pose> basePoseWithScore;
     for(int j=0;j<probBasePoses.size();j++)
     {
-      int numofHits = 0;
-      int solns = 0;
-      for(int j1=0;j1<GRASP_POSES_.size();j1++)
-      {
-        int nsolns = 0;
-        std::vector<double> joint_solns;
-        numofHits += kin.isIkSuccesswithTransformedBase(probBasePoses[j], GRASP_POSES_[j1],joint_solns, nsolns);
-        solns +=nsolns;
-       }
-      double basePlaceScore = (double(solns) - double(min_solns)) / (double(max_solns) - double(min_solns));
-      basePoseWithHits.insert(std::make_pair(basePlaceScore, probBasePoses[j]));
+      int num_of_solns = 0;
+      int max_num_of_solns;
+      if(use_IKFast_){ // using kinematics
+        max_num_of_solns = 8;
+        for(int j1=0;j1<GRASP_POSES_.size();j1++){
+          std::vector<double> joint_soln;
+          int nsolns = 0;
+          kin.isIkSuccesswithTransformedBase(probBasePoses[j], GRASP_POSES_[j1], joint_soln, nsolns);
+          num_of_solns +=nsolns;
+        }
+      }else{ // using reachability
+        max_num_of_solns = 100 ; //////////////// SCORE REEVALUTION
+        // THIS FUNCTION REQUIRES THE ROBOT BASE POSE
+        Eigen::Affine3d arm_base_tf;
+        tf::poseMsgToEigen(probBasePoses[j], arm_base_tf);
+        geometry_msgs::Pose robot_base_pose;
+        tf::poseEigenToMsg(arm_base_tf*transform_arm_to_root_, robot_base_pose);
+////////////        ROS_INFO("IKS - sphere %d - armpose %f %f %f - robot base pose: %f %f %f", i, probBasePoses[j].position.x, probBasePoses[j].position.y, probBasePoses[j].position.z, robot_base_pose.position.x, robot_base_pose.position.y, robot_base_pose.position.z);////
+        for(int j1=0;j1<GRASP_POSES_.size();j1++){
+          int nsols = reach_->getValidIKCount(robot_base_pose, robot_state_, GRASP_POSES_[j1]);
+          if(nsols==-999999){ //could not call the IKrequest service
+            score_=-999999; // to signal the error outside the function
+            return;
+          }
+          num_of_solns += nsols;
+ ////////////         ROS_INFO("IKS - sphere %d - pose %d : %f %f %f - grasp: %d- sols: %d", i, j, probBasePoses[j].position.x, probBasePoses[j].position.y, probBasePoses[j].position.z, j1, nsols);////
+        }
+      }
+      float basePlaceScore = (float(num_of_solns)/float(GRASP_POSES_.size()*max_num_of_solns)); //// review questo calcolo
+ ////////////     ROS_INFO("IKS - spere %d - pose %d - totsols: %d - score: %f", i, j, num_of_solns, basePlaceScore);////
+      basePoseWithScore.insert(std::make_pair(basePlaceScore, probBasePoses[j]));
     }
     std::map<double, geometry_msgs::Pose>::iterator itr;
-    itr = basePoseWithHits.end();
+    itr = basePoseWithScore.end();
     --itr;
     pose_scores.push_back(itr->second);
+////////////    ROS_INFO("IKS - sphere %d - best pose: %f %f %f - score: %f", i, itr->second.position.x, itr->second.position.y, itr->second.position.z, itr->first);////
   }
+////////////  ROS_INFO("IKS - call calculate score");////
   double s = calculateScoreForArmBase(GRASP_POSES_, pose_scores);
   score_ = s;
-  final_base_poses = pose_scores;
+  if(score_!=-999999){
+    final_base_poses = pose_scores;
+  }
 }
 
 void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
@@ -980,25 +1084,43 @@ void PlaceBase::showBaseLocationsbyArmModel(std::vector< geometry_msgs::Pose > p
 {
 
   ROS_INFO("Showing Base Locations by Arm Model:");
-  kinematics::Kinematics k;
+  kinematics::Kinematics kin;
 
   ////boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
   ////imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
   ////ros::Duration(0.1).sleep();
   ////imServer->applyChanges();
-
   std::vector<visualization_msgs::InteractiveMarker> iMarkers;
   BasePoseJoint base_pose_joints;
   for(int i=0;i<po.size();i++)
   {
-    for(int j=0;j<GRASP_POSES_.size();j++)
-    {
-      std::vector<double> joint_soln;
-      int nsolns = 0;
-      k.isIkSuccesswithTransformedBase(po[i], GRASP_POSES_[j], joint_soln, nsolns);
-      std::pair<std::vector<double>, geometry_msgs::Pose > myPair( joint_soln, po[i]);
-      base_pose_joints.insert(myPair);
+    ROS_INFO("pose %d - use_IKFast_: %d", i, use_IKFast_);////
+    if(use_IKFast_){ // using kinematics
+      for(int j=0;j<GRASP_POSES_.size();j++){
+        std::vector<double> joint_soln;
+        int nsolns = 0;
+        kin.isIkSuccesswithTransformedBase(po[i], GRASP_POSES_[j], joint_soln, nsolns);
+        std::pair<std::vector<double>, geometry_msgs::Pose > myPair(joint_soln, po[i]);
+        base_pose_joints.insert(myPair);
+      }
+    }else{ // using reachability
+      // THIS FUNCTION REQUIRES THE ROBOT BASE POSE
+      Eigen::Affine3d arm_base_tf;
+      tf::poseMsgToEigen(po[i], arm_base_tf);
+      geometry_msgs::Pose robot_base_pose;
+      tf::poseEigenToMsg(arm_base_tf*transform_arm_to_root_, robot_base_pose);
+      for(int j=0;j<GRASP_POSES_.size();j++){
+        std::vector<double> joint_soln = reach_->getValidIKSol(robot_base_pose, robot_state_, GRASP_POSES_[j]);
+        if(joint_soln.size() == 1){ // means i got the error msg - could not call the IKrequest service
+          score_=-999999; // to signal the error outside the function
+          return;
+        }else if(joint_soln.size() > 1){ // if 0 then no solution if more than 1 then i have a solutions
+          std::pair<std::vector<double>, geometry_msgs::Pose > myPair(joint_soln, po[i]);
+          base_pose_joints.insert(myPair);
+        }
+      }
     }
+
   }
   mark_->makeArmMarker(base_pose_joints, iMarkers, show_ureach_models_);
   for(int i=0;i<iMarkers.size();i++)
@@ -1014,7 +1136,7 @@ void PlaceBase::showBaseLocationsbyArmModel(std::vector< geometry_msgs::Pose > p
 void PlaceBase::showBaseLocationsbyRobotModel(std::vector<geometry_msgs::Pose> po)
 {
   ROS_INFO("Showing Base Locations by Robot Model:");
-  kinematics::Kinematics k;
+  kinematics::Kinematics kin;
   ////boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;
   ////imServer.reset(new interactive_markers::InteractiveMarkerServer("robot_model", "robot_model", false));
   ////ros::Duration(0.1).sleep();
@@ -1023,16 +1145,30 @@ void PlaceBase::showBaseLocationsbyRobotModel(std::vector<geometry_msgs::Pose> p
   BasePoseJoint base_pose_joints;
   for(int i=0;i<po.size();i++)
   {
-    geometry_msgs::Pose base_pose_at_arm;
-    transformFromRobotbaseToArmBase(po[i], transform_arm_to_root_.inverse(), base_pose_at_arm);
-    for(int j=0;j<GRASP_POSES_.size();j++)
-    {
-      std::vector<double> joint_soln;
-      int nsolns = 0;
-      k.isIkSuccesswithTransformedBase(base_pose_at_arm, GRASP_POSES_[j], joint_soln, nsolns);
-      std::pair<std::vector<double>, geometry_msgs::Pose > myPair( joint_soln, po[i]);
-      base_pose_joints.insert(myPair);
+
+    if(use_IKFast_){ // using kinematics
+      geometry_msgs::Pose base_pose_at_arm;
+      transformFromRobotbaseToArmBase(po[i], transform_arm_to_root_.inverse(), base_pose_at_arm);
+      for(int j=0;j<GRASP_POSES_.size();j++){
+        std::vector<double> joint_soln;
+        int nsolns = 0;
+        kin.isIkSuccesswithTransformedBase(base_pose_at_arm, GRASP_POSES_[j], joint_soln, nsolns);
+        std::pair<std::vector<double>, geometry_msgs::Pose > myPair(joint_soln, po[i]);
+        base_pose_joints.insert(myPair);
       }
+    }else{ // using reachability
+      // THIS FUNCTION REQUIRES THE ROBOT BASE POSE
+      for(int j=0;j<GRASP_POSES_.size();j++){
+        std::vector<double> joint_soln = reach_->getValidIKSol(po[i], robot_state_, GRASP_POSES_[j]);
+        if(joint_soln.size() == 1){ // means i got the error msg - could not call the IKrequest service
+          score_=-999999; // to signal the error outside the function
+          return;
+        }else if(joint_soln.size() > 1){ // if 0 then no solution if more than 1 then i have a solutions
+          std::pair<std::vector<double>, geometry_msgs::Pose > myPair(joint_soln, po[i]);
+          base_pose_joints.insert(myPair);
+        }
+      }
+    }
   }
 
   mark_->makeRobotMarker(base_pose_joints, iMarkers, show_ureach_models_);
