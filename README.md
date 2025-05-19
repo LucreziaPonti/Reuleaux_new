@@ -10,8 +10,6 @@ The other packages used in this thesis work are:
 
 - TIAGO robot: https://github.com/LucreziaPonti/TiagoForReuleaux.git - my repository containing all the pkgs for the tiago robot + some minor changes (!! make sure to look into the README file for additional installation steps, after having installed Reuleaux)
 
-- PANDA robot: https://github.com/LucreziaPonti/PandaForReuleaux - my repository containing panda_moveit_config (+ installed the packages for the robot description)
-
 - RML63-B : https://github.com/LucreziaPonti/RM63BforReuleaux - my repository containing the robot description and the moveit_config package (created with the Moveit Setup Assistant)
 
 - Full simulation : ** not in a repo yet ** - contains multiple packages that allow to create the full simulation with the robot TIAGo in a kitchen environment
