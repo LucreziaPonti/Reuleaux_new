@@ -204,7 +204,7 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
     //ROS_INFO("getValidIKCount - request: avoid collisions %d", req.avoid_collisions); //////
     std::vector<std::vector<double>> all_joint_values;
     
-    for (int i = 0; i < 100; ++i) // iterate an arbitrary number of times
+    for (int i = 0; i < 50; ++i) // iterate an arbitrary number of times
     {   
       // Update the robot state with random values for the manipulator joints and the base pose for the virtual joint
       robot_state.setToRandomPositions(joint_model_group_);
@@ -263,8 +263,9 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
 
     // The robot state received needs to be a VALID state
     // Create the new state for the virtual_joint - to be used in the robot state for the ik
-    Eigen::Isometry3d base_pose_eigen;
-    tf::poseMsgToEigen(base_pose, base_pose_eigen);
+    ////ROS_INFO("getValidIKSol - base pose: %f %f %f %f %f %f %f ",base_pose.position.x,base_pose.position.y,base_pose.position.z,base_pose.orientation.x,base_pose.orientation.y,base_pose.orientation.z,base_pose.orientation.w);////
+    /////rmv///Eigen::Isometry3d base_pose_eigen;
+    /////rmv///tf::poseMsgToEigen(base_pose, base_pose_eigen);
     std::vector<double> vj_pos;
     if(robot_state.getJointModel("virtual_joint")->getTypeName() == "Planar"){
         vj_pos.resize(3);
@@ -275,6 +276,7 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
         double roll, pitch, yaw;
         m.getRPY(roll, pitch, yaw);
         vj_pos[2] = yaw; // theta angle
+        ////ROS_INFO("getValidIKSol - VJ= %f %f %f", vj_pos[0],vj_pos[1],vj_pos[2]); ///////
     }else if(robot_state.getJointModel("virtual_joint")->getTypeName() == "Floating"){
         vj_pos.resize(7);
         vj_pos[0] = base_pose.position.x;
@@ -312,7 +314,7 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
 
     std::vector<double> joint_solution;
     
-    for (int i = 0; i < 10; ++i) // iterate an arbitrary number of times
+    for (int i = 0; i < 4; ++i) // iterate an arbitrary number of times
     {   
       // Update the robot state with random values for the manipulator joints and the base pose for the virtual joint
       robot_state.setToRandomPositions(joint_model_group_);

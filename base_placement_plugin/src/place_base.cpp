@@ -323,7 +323,7 @@ double PlaceBase::calculateScoreForRobotBase(std::vector<geometry_msgs::Pose> &g
         num_of_solns +=nsolns;
       }
     }else{ // using reachability
-      max_num_of_solns = 100 ; //////////////// SCORE REEVALUTION
+      max_num_of_solns = 50 ; //////////////// SCORE REEVALUTION
       for(int j=0;j<grasp_poses.size();j++){
         int nsols= reach_->getValidIKCount(base_poses[i], robot_state_, grasp_poses[j]);
         if(nsols==-999999){ //could not call the IKrequest service
@@ -397,7 +397,7 @@ double PlaceBase::calculateScoreForArmBase(std::vector<geometry_msgs::Pose> &gra
         num_of_solns +=nsolns;
       }
     }else{ // using reachability
-      max_num_of_solns = 100 ; //////////////// SCORE REEVALUTION
+      max_num_of_solns = 50 ; //////////////// SCORE REEVALUTION
       // THIS FUNCTION REQUIRES THE ROBOT BASE POSE
       Eigen::Affine3d arm_base_tf;
       tf::poseMsgToEigen(base_poses[i], arm_base_tf);
@@ -536,11 +536,11 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
 
   const moveit::core::JointModelGroup* arm_jmp = robot_model_->getJointModelGroup(selected_group_);
   const std::vector<std::string>& arm_link_names = arm_jmp->getLinkModelNames();
-  arm_base_link_name_ = arm_link_names[0];
-  ROS_INFO("arm_base_link_name: %s", arm_base_link_name_.c_str());//////// metti a debug
+  arm_first_link_name_ = arm_link_names[0];
+  ROS_INFO("arm_first_link_name: %s", arm_first_link_name_.c_str());//////// metti a debug
 
   std::vector<std::string> full_link_names = robot_model_->getLinkModelNames();
-  int position = std::find(full_link_names.begin(), full_link_names.end(), arm_base_link_name_) -full_link_names.begin() ;
+  int position = std::find(full_link_names.begin(), full_link_names.end(), arm_first_link_name_) -full_link_names.begin() ;
   arm_root_link_name_ = full_link_names[position-1]; // "arm_root" in how I call the parent frame of the manipulator of the robot... it may correspond to the robot_root
   ROS_INFO("arm_root_link_name: %s", arm_root_link_name_.c_str());//////// metti a debug
 
@@ -600,9 +600,13 @@ bool PlaceBase::findbase(std::vector< geometry_msgs::Pose > grasp_poses)
       GRASP_POSES_ = grasp_poses;
       ROS_INFO("//////////////////////// START UNION MAP CREATION ////////////////////////");
       if(selected_method_ == 3) {// findBaseByVerticalRobotModel 
+        /*////////////*/std::chrono::high_resolution_clock::time_point start_AP = std::chrono::high_resolution_clock::now();
         transformToRobotbase(PoseColFilter, transform_arm_to_root_, robot_PoseColfilter); // transforms IRM so that it contains robot base poses instead of arm base
         //create a point cloud which consists of all of the possible base locations for all grasp poses and a list of base pose orientations
         sd_->associatePose(baseTrnsCol, grasp_poses, robot_PoseColfilter, res, false, transform_arm_to_root_,selected_group_,robot_state_); 
+        /*////////////*/std::chrono::high_resolution_clock::time_point finish_AP = std::chrono::high_resolution_clock::now(); 
+        /*////////////*/std::chrono::milliseconds AP = std::chrono::duration_cast<std::chrono::milliseconds>(finish_AP - start_AP); 
+        /*////////////*/ROS_INFO("Time for AssociatePose: %ld ms", AP.count()); 
     ////    ROS_INFO("Size of baseTrnsCol dataset: %lu", baseTrnsCol.size());
     ////    createSpheres(baseTrnsCol, sphereColor, highScoreSp, true);
       }else{ // remaining methods: findBaseByPCA, findBaseByGraspReachabilityScore, findBaseByIKSolutionScore
@@ -761,9 +765,12 @@ void PlaceBase::findBaseByVerticalRobotModel()
   int num_of_desired_sp = HIGH_SCORE_SP_*4;
   int num_of_sp = highScoreSp.size();
   int jump=4; //The iteration is taken 4 just to make sure that the robot models are not so close to each other
-  if(num_of_desired_sp>num_of_sp){
+  if(num_of_desired_sp>=num_of_sp){
     num_of_desired_sp = num_of_sp;
     jump=num_of_sp/HIGH_SCORE_SP_; // in I don't have enough spheres I do lower iterations
+    if(jump==0){
+      jump=1;
+    }
   }
   if(BASE_LOC_SIZE_>num_of_sp)
     ROS_ERROR("Desired base locations are too high (num_of_sp=%d , num_base_loc=%d). Please reduce it",num_of_sp,BASE_LOC_SIZE_);
@@ -778,7 +785,6 @@ void PlaceBase::findBaseByVerticalRobotModel()
     prob_base_pose.orientation.z = 0;
     prob_base_pose.orientation.w = 1;
     base_poses.push_back(prob_base_pose);
-     
   }
 
   for(int i=0;i<BASE_LOC_SIZE_;++i)
@@ -950,7 +956,7 @@ void PlaceBase::findBaseByIKSolutionScore()
 
   for(int i=0;i<numofSp;i++)
   {
-    ////ROS_INFO("Base pose %d/%d ....", i+1, numofSp);
+    ROS_INFO("IKS - Computing base pose %d/%d ....", i+1, numofSp);
     std::vector< geometry_msgs::Pose > probBasePoses;
     std::multimap<std::vector<double>, std::vector<double> >::iterator it;
     for(it = baseTrnsCol.lower_bound(highScoreSp[i]); it != baseTrnsCol.upper_bound(highScoreSp[i]); ++it)
@@ -975,7 +981,7 @@ void PlaceBase::findBaseByIKSolutionScore()
           num_of_solns +=nsolns;
         }
       }else{ // using reachability
-        max_num_of_solns = 100 ; //////////////// SCORE REEVALUTION
+        max_num_of_solns = 50 ; //////////////// SCORE REEVALUTION
         // THIS FUNCTION REQUIRES THE ROBOT BASE POSE
         Eigen::Affine3d arm_base_tf;
         tf::poseMsgToEigen(probBasePoses[j], arm_base_tf);
@@ -1015,6 +1021,8 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
   /* Visualizing base solutions as arrow. Arrows are now pointing towards Z direction.
   */
   ROS_INFO("Showing Base Locations by Arrow: Arrows are pointing in Z direction");
+  ros::Publisher marker_pub = nh_.advertise< visualization_msgs::MarkerArray >("visualization_marker_array", 1);
+
   std::vector<geometry_msgs::Pose> pose_arr;
   for(int i=0;i<po.size();i++)
   {
@@ -1049,8 +1057,7 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
     pose_arr.push_back(new_pose);
   }
 
-  ////ros::NodeHandle nh;
-  ros::Publisher marker_pub = nh_.advertise< visualization_msgs::MarkerArray >("visualization_marker_array", 1);
+  
   visualization_msgs::MarkerArray markerArr;
   for (int i = 0; i < po.size(); ++i)
   {
@@ -1076,7 +1083,7 @@ void PlaceBase::showBaseLocationsbyArrow(std::vector< geometry_msgs::Pose > po)
     markerArr.markers.push_back(marker);
   }
   marker_pub.publish(markerArr);
-
+  ros::Duration(0.1).sleep(); 
 }
 
 

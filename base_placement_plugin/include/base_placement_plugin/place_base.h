@@ -63,7 +63,7 @@ private:
   std::string fixed_frame_;
   bool use_IKFast_;
   std::string robot_root_link_name_;
-  std::string arm_base_link_name_;
+  std::string arm_first_link_name_;
   std::string arm_root_link_name_;
   Eigen::Affine3d transform_arm_to_root_;
   boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imServer;

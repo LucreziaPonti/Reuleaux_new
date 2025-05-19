@@ -326,6 +326,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
     // get grasp pose in tf format
     tf2::Vector3 grasp_vec(grasp_poses[i].position.x, grasp_poses[i].position.y, grasp_poses[i].position.z);
     tf2::Quaternion grasp_quat(grasp_poses[i].orientation.x, grasp_poses[i].orientation.y, grasp_poses[i].orientation.z, grasp_poses[i].orientation.w);
+    ///ROS_INFO("grasp pose %d : %f %f %f - %f %f %f %f",i,grasp_poses[i].position.x, grasp_poses[i].position.y, grasp_poses[i].position.z,grasp_poses[i].orientation.x, grasp_poses[i].orientation.y, grasp_poses[i].orientation.z, grasp_poses[i].orientation.w);
     grasp_quat.normalize();
     tf2::Transform grasp_trns;
     grasp_trns.setOrigin(grasp_vec);
@@ -353,7 +354,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
           continue;
         }
         //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
-        double tolerance = 0.2;//////////////////////////////// quite likely too big but for now i keep it like this
+        double tolerance = 0.4;//////////////////////////////// quite likely too big but for now i keep it like this
         tf2::Matrix3x3 rotation_matrix(new_trans_quat);
         tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector then check it is close to vertical
         if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
@@ -371,7 +372,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
         //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);////
 
       }else{ // arm base pose (other methods)
-        if((new_trans_vec[2]<-resolution)){ // remove positions that are below ground (with some allowance)
+        if((new_trans_vec[2]<-resolution/2)){ // remove positions that are below ground (with some allowance)
           continue;           
         }
         if(TIAGO_torso_filt_){ //// extra robot specific filtering
@@ -379,9 +380,13 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
             if((new_trans_vec[2]>1.232||new_trans_vec[2]<0.89)){ //outside robot's fisical boundaries (torso_lift_link's height)
               continue;           
             }
+          }else if(planning_group=="arm_torso"){
+            if((new_trans_vec[2]>(0.290 + resolution/2)||new_trans_vec[2]<(0.290 - resolution/2))){ //outside robot's fisical boundaries (torso_lift_link's height)
+              continue;           
+            }
           }
           //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
-          double tolerance = 0.3; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
+          double tolerance = 0.4; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
           tf2::Matrix3x3 rotation_matrix(new_trans_quat);
           tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector then check it is close to vertical 
           if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
@@ -473,7 +478,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
   // Get bounding box OF THE UNION MAP AT THIS POINT for checking search validity
   double min_x, min_y, min_z, max_x, max_y, max_z;
   base_poses_octree.getBoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
-  ROS_DEBUG("associatePoses: BOUNDING BOX x:[ %f : %f] , y:[ %f : %f] , z:[ %f : %f]", min_x, max_x, min_y, max_y, min_z, max_z);
+//  ROS_DEBUG("associatePoses: BOUNDING BOX x:[ %f : %f] , y:[ %f : %f] , z:[ %f : %f]", min_x, max_x, min_y, max_y, min_z, max_z);
 
   int sphCount=0;/////////////////////////
   // add all base poses from cloud to an octree
@@ -548,7 +553,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
           // Get the base pose for a given index found in a voxel
           std::vector< double > base_pose_vec;
           base_pose_vec.reserve(3);
-          std::vector< float > position = trns_col[pointIdxVec[j]].first;
+          //std::vector< float > position = trns_col[pointIdxVec[j]].first;
           //base_pose_vec.push_back(double(position[0]));
           //base_pose_vec.push_back(double(position[1]));
           //base_pose_vec.push_back(double(position[2]));
@@ -587,12 +592,22 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
             }else{ // if it is a robot base pose
               utility::vectorToPose(base_pose_vec, base_pose);
             }
-            std::vector<double> sol = reach.getValidIKSol(base_pose, robot_state_ptr, grasp_poses[i]);
-            if(sol.size() == 0){
-              continue; // no valid IK solution
-            }else if (sol.size()==1){ // meaning it is = -999999
-              ROS_ERROR("associatePose - could not perform the IK check");
-              return;
+            ////ROS_INFO("base pose test: %f %f %f %f %f %f %f",base_pose.position.x,base_pose.position.y,base_pose.position.z,base_pose.orientation.x,base_pose.orientation.y,base_pose.orientation.z,base_pose.orientation.w);
+            bool valid = false;
+            for(int k=0; k < grasp_poses.size(); ++k){
+              /////ROS_INFO("grasp pose test: %f %f %f %f %f %f %f",grasp_poses[k].position.x,grasp_poses[k].position.y,grasp_poses[k].position.z,grasp_poses[k].orientation.x,grasp_poses[k].orientation.y,grasp_poses[k].orientation.z,grasp_poses[k].orientation.w);
+              std::vector<double> sol = reach.getValidIKSol(base_pose, robot_state_ptr, grasp_poses[k]);
+              if(sol.size() != 0){ //found 1 valid sol
+                valid=true;
+                break; //exit for cycle
+              }else if (sol.size()==1){ // meaning it is = -999999
+                ROS_ERROR("associatePose - could not perform the IK check");
+                return;
+              }
+            }
+            if(!valid){ // no valid ik sol found - discard the pose
+              ////ROS_INFO("discarted");////
+              continue;
             }
           }
           baseTrnsCol.insert(std::pair< std::vector< double >, std::vector< double > >(voxel_pos, base_pose_vec));
