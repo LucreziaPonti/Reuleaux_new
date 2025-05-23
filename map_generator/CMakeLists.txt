@@ -97,4 +97,6 @@ add_executable(OG_create_RM src/nodes/OG_create_RM.cpp)
 add_dependencies(OG_create_RM ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(OG_create_RM discretization kinematics hdf5_dataset ${HDF5_INCLUDE_DIR} ${catkin_LIBRARIES})
 
-
+////add_executable(test_moveit_IK src/nodes/IGNORE_test_moveit_IK.cpp)
+////add_dependencies(test_moveit_IK ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+////target_link_libraries(test_moveit_IK discretization kinematics hdf5_dataset ${HDF5_INCLUDE_DIR} ${catkin_LIBRARIES})
