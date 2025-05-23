@@ -66,19 +66,6 @@ public:
     const bool arm_pose, const Eigen::Affine3d arm_to_root_eigen,
     const std::string planning_group, moveit::core::RobotStatePtr robot_state_ptr);
 
-
-  /*  //! Compare two vectors, of length 3, for multimap search ////////////non penso venga usato
-  struct vec_comp_
-  {
-    bool operator()(const std::vector< float >& v1, const std::vector< float >& v2) const
-    {
-      // TODO: need to add tolerance as a function of the map resolution; resolution maybe needs to be a class variable
-      // but this appears to work fine for now
-      float tol = 0.001;
-      return (fabs(v1[0] - v2[0]) < tol) && (fabs(v1[1] - v2[1]) < tol) && (fabs(v1[2] - v2[2]) < tol);
-    }
-  };
-    */
 private:
   
   void createCenters(octomap::OcTree* tree, std::vector<geometry_msgs::Point>& centers);
@@ -92,7 +79,7 @@ private:
   std::vector<geometry_msgs::Pose> poses_;
   map_generator::WorkSpace ws_;
 
-// FILTERING OF UNION MAP IN ASSOCIATE POSES /////////////////////////////////
+// FILTERING OF UNION MAP IN ASSOCIATE POSES 
   ros::NodeHandle nh; 
   // PARAMETERS FOR THE FILTERING OF THE UNION MAP IN ASSOCIATEPOSES
   bool IKValid_filt_; // to perform the IK request to check for valid IK solutions

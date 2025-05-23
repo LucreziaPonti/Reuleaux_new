@@ -8,9 +8,9 @@ There are a few different options to use the plugin:
   ```
   ARGUMENTS: 
   - **bp_results** : allows to run an additional node move_to_bp_result (for the work with the TIAGo robot is actually move_to_bp_result_TIAGO) that subscribes to the topic *reule_aux/bp_results* to receive the results and elaborate them as needed - default = *false* 
-  - **fixed_frame** : set the fixed frame for the plugin, it should be the parent of the virtual joint of the robot or the root frame of the robot  - default : *base_link* (may change the default depending on the robot used)
+  - **fixed_frame** : set the fixed frame for the plugin, it should be the parent of the virtual joint of the robot or the root frame of the robot  - default : *odom* (may change the default depending on the robot used)
   - *Filtering parameters*: to choose and setup the options for the filtering of the Union Map (see related section of the Readme)
-    - **TIAGO_torso_filtering** : bool to have the additional filtering for the TIAGo robot constraints - default = *true*  //// will be set to default false later in the work
+    - **TIAGO_torso_filtering** : bool to have the additional filtering for the TIAGo robot constraints - default = *true*  
     - **OGM2d_filtering** : bool to have the filtering using a Occupancy Grid Map (2-dimentional) - default = *false*
       - **OGM2d_topic** : name of the topic to retreive the OGM (make sure that it is a topic of type *nav_msgs/OccupancyGrid*) - default=*"/move_base/global_costmap/costmap"*
       - **OGM2d_cost_threshold** : value of the cost of the grid over which a point has to be filtered - default = *70*

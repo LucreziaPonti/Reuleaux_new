@@ -176,7 +176,7 @@ protected:
 
   void transformFromRobotbaseToArmBase(const geometry_msgs::Pose& base_pose,  const Eigen::Affine3d root_to_arm,  geometry_msgs::Pose &arm_base_pose);
   void createSpheres(std::multimap< std::vector< double >, std::vector< double > > basePoses,
-                     std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp);/*, ///// bool reduce_D*/
+                     std::map< std::vector< double >, double >& spColor, std::vector< std::vector< double > >& highScoredSp);
 
   double calculateScoreForRobotBase(std::vector<geometry_msgs::Pose>& grasp_poses, std::vector<geometry_msgs::Pose>& base_poses);
   double calculateScoreForArmBase(std::vector<geometry_msgs::Pose>& grasp_poses, std::vector<geometry_msgs::Pose>& base_poses);

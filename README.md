@@ -12,7 +12,7 @@ The other packages used in this thesis work are:
 
 - RML63-B : https://github.com/LucreziaPonti/RM63BforReuleaux - my repository containing the robot description and the moveit_config package (created with the Moveit Setup Assistant)
 
-- Full simulation : ** not in a repo yet ** - contains multiple packages that allow to create the full simulation with the robot TIAGo in a kitchen environment
+- Full simulation : https://github.com/LucreziaPonti/FullSimForReuleaux - contains multiple packages that allow to create the full simulation with the robot TIAGo in a kitchen environment
     - sim_gazebo : contains all the launch, map and config files for the kitchen simulation
     - grasp : contains multiple packages, cloned from the repositories of Jennifer Buehler that provide different plugins for gazebo and RViz: to simulate a fake object recognition, load collisionobjects in the planning scene and execute grasps easily ( check out the original repos and all their wiki pages for more info: https://github.com/JenniferBuehler)
 

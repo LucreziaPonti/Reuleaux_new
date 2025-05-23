@@ -12,31 +12,14 @@ CreateMarker::CreateMarker(std::string group_name) : spinner(1), group_name_(gro
 {
   spinner.start();
   group_.reset(new MoveGroupInterface(group_name_));
-  ////ROS_INFO_STREAM("Selected planning group: "<< group_->getName());
   robot_model_ = group_->getRobotModel();
 
-/* ///// VERS 1 of updateRobotState - not in use
-
-  // Crea un buffer TF2 e un listener
-  auto tf_buffer = std::make_shared<tf2_ros::Buffer>();
-  tf2_ros::TransformListener tf_listener(*tf_buffer);
-  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor("robot_description", tf_buffer));
-  if(!planning_scene_monitor_->getPlanningScene())
-  {
-    ROS_ERROR("Planning scene not configured");
-    return;
-  }
-    ROS_INFO("Planning scene configured");
-    planning_scene_monitor_->startSceneMonitor();
-    planning_scene_monitor_->startWorldGeometryMonitor();
-    planning_scene_monitor_->startStateMonitor();
-*/
   
   if (nh.getParam("BPP_fixed_frame", fixed_frame_)) {
       ROS_DEBUG("CM - Received fixed frame for plugin: %s", fixed_frame_.c_str());
   } else {
       ROS_WARN("CM - Failed to get param 'param_name' - setting to defualt: 'world'");
-      fixed_frame_ = "world"; ////////////////
+      fixed_frame_ = "world"; 
   }
 }
 
@@ -80,63 +63,19 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
 {
   if(!arm_only){
 
-  /* ////VERS 1 for robot state update - using planning scene monitor - gave issues
-    if(!planning_scene_monitor_){
-      ROS_ERROR("Planning scene not configured");
-      return;
-    }
-
-    planning_scene_monitor_->getPlanningScene()->getCurrentStateNonConst().update();
-    planning_scene_monitor_->updateFrameTransforms();
-    const moveit::core::RobotState& current_state = planning_scene_monitor_->getPlanningScene()->getCurrentState();
-    current_state.printStateInfo(); 
-    
-    // Get all joint names
-    const std::vector<std::string>& joint_names = current_state.getVariableNames();
-    int start=0; // default> no virtual joints or fixed vj 
-    
-    // check for virtual joints variables that need to be handled differently
-    if(joint_names[0] == "virtual_joint/trans_x"){ // floating joint - variables: trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, rot_w 
-      start=7;      
-    }else if (joint_names[0] == "virtual_joint/x"){ // planar joint - variables: x, y, theta
-      start=3;
-    }
-
-    for (int i = 0; i < start; i++){  // set the virtual joint variables
-      double vj_pos = current_state.getVariablePosition(joint_names[i]);
-      robot_state->setVariablePosition(joint_names[i], vj_pos);
-      ROS_INFO(" VJ VAR %s - %f", joint_names[i].c_str(), vj_pos);
-    }
-    if(start!=0){
-      std::vector<double> vj_pos;
-      vj_pos.resize(start);
-      for (int i = 0; i < start; i++){  // set the virtual joint variables
-        vj_pos[i] = current_state.getVariablePosition(joint_names[i]);
-        ROS_INFO(" VJ VAR %s - %f", joint_names[i].c_str(), vj_pos);//////////////
-      }
-      robot_state->setJointPositions("virtual_joint", vj_pos);
-    }
-    for(int i=start;i<joint_names.size();i++){ // set the rest of the joint variables
-      const double* joint_pos = current_state.getJointPositions(joint_names[i]);
-      robot_state->setJointPositions(joint_names[i], joint_pos);
-      ROS_INFO(" var %d %s - %f", i, joint_names[i].c_str(), joint_pos[0]);
-    }
-  */
-    
-    //// VERS 2 using joint state
     // GET THE VALUES OF THE JOINTS FROM THE JOINT STATE PUBLISHER
     sensor_msgs::JointState empty_state;
     joint_state_update_ = empty_state;
     joint_state_sub_ = nh.subscribe("/joint_states", 1, &CreateMarker::jointStateCallback, this);
     while (joint_state_update_.name.size() == 0){
-      ROS_DEBUG("Waiting for joint state update"); /////////////////////
+      ROS_DEBUG("Waiting for joint state update"); 
       ros::Duration(0.1).sleep();
     } 
     joint_state_sub_.shutdown();
     //check joint state received:
     for(int i=0;i<joint_state_update_.name.size();i++){
-      //ROS_INFO_STREAM("Joint name: "<<joint_state_update_.name[i]);/////////////////////
-      //ROS_INFO_STREAM("Joint position: "<<joint_state_update_.position[i]);/////////////////////
+      //ROS_INFO_STREAM("Joint name: "<<joint_state_update_.name[i]);
+      //ROS_INFO_STREAM("Joint position: "<<joint_state_update_.position[i]);
       robot_state->setJointPositions(joint_state_update_.name[i], &(joint_state_update_.position[i]));
     }
     // !!!! the joint state does NOT contain the virtual joint !!!! 
@@ -147,7 +86,7 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
         vj_pos[1] = 0;
         vj_pos[1] = 0;
         vj_pos[2] = 0; // theta angle
-        //ROS_INFO("/////// vj planar %f %f %f ", vj_pos[0],vj_pos[1],vj_pos[2]);/////////////////////
+        //ROS_INFO(" vj planar %f %f %f ", vj_pos[0],vj_pos[1],vj_pos[2]);
         robot_state->setJointPositions("virtual_joint", vj_pos);
       }else if(robot_model_->getJointModel("virtual_joint")->getTypeName() == "Floating"){
         std::vector<double> vj_pos(7);
@@ -158,7 +97,7 @@ void CreateMarker::updateRobotState(const std::vector<double>& joint_soln, movei
         vj_pos[4] = 0;
         vj_pos[5] = 0;
         vj_pos[6] = 0;
-        //ROS_INFO("/////// vj floating %f %f %f %f %f %f %f", vj_pos[0],vj_pos[1],vj_pos[2],vj_pos[3],vj_pos[4],vj_pos[5],vj_pos[6]);/////////////////////
+        //ROS_INFO(" vj floating %f %f %f %f %f %f %f", vj_pos[0],vj_pos[1],vj_pos[2],vj_pos[3],vj_pos[4],vj_pos[5],vj_pos[6]);
         robot_state->setJointPositions("virtual_joint", vj_pos);
       } // if fixed there is no need to set the joint values of the virtual joint
     } 
@@ -224,7 +163,6 @@ void CreateMarker::updateMarkers(const geometry_msgs::Pose& base_pose, bool is_r
   double b = unifRand();
   for(std::size_t j=0;j<markers.markers.size();j++)
   {
-    ////markers.markers[j].header.frame_id = "odom";
     markers.markers[j].header.frame_id = fixed_frame_;
     markers.markers[j].type = markers.markers[j].type;
     if(markers.markers[j].type == visualization_msgs::Marker::MESH_RESOURCE){
@@ -291,7 +229,6 @@ void CreateMarker::makeIntMarkerControl(const geometry_msgs::Pose& base_pose, co
 void CreateMarker::createInteractiveMarker(const geometry_msgs::Pose& base_pose, const std::vector<double>& joint_soln,
                                            const int& num, bool arm_only, bool is_reachable,visualization_msgs::InteractiveMarker& iMarker)
 {
-  ////iMarker.header.frame_id = "odom";
   iMarker.header.frame_id = fixed_frame_;
   iMarker.pose = base_pose;
   iMarker.scale = 0.3;

@@ -106,7 +106,7 @@ void bp_sub_cb(const reule_aux::BP_Res::ConstPtr& msg){
             ROS_INFO("move_to_bp_result : best pose received - storing all data");
             best_pose_ = appo;
             store_data(received_bp_,best_pose_);
-            ROS_INFO("move_to_bp_result : all data stored - services are now available"); /////
+            ROS_INFO("move_to_bp_result : all data stored - services are now available"); 
         }else{
             received_bp_.push_back(appo);
         }
@@ -171,7 +171,7 @@ bool move_nav_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &r
         }
         for(int i=0;i<base_poses_.size();i++){
             move_base_msgs::MoveBaseGoal goal;
-            goal.target_pose.header.frame_id = fixed_frame_; /////// this ok or maybe better to use map?
+            goal.target_pose.header.frame_id = fixed_frame_; 
             goal.target_pose.header.stamp = ros::Time::now();
             
             goal.target_pose.pose= fixValidOrientation(base_poses_[i]); // the pose is always a pose of the root of the robot 
@@ -225,7 +225,7 @@ int main(int argc, char **argv){
         ROS_DEBUG("PB - Received fixed frame for plugin: %s", fixed_frame_.c_str());
     } else {
         ROS_WARN("PB - Failed to get param 'param_name' - setting to defualt: 'world'");
-        fixed_frame_ = "world"; //////////////// 
+        fixed_frame_ = "world";  
     }
 
     ros::Subscriber bp_sub = n.subscribe("reule_aux/bp_results", 1000, bp_sub_cb);

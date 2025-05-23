@@ -229,7 +229,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
         ROS_WARN("associatePose - Failed to get param 'OGM2_filt_' - setting to defualt: 'false'");
         OGM2d_filt_ = false;
     }
-    if (!nh.getParam("TIAGO_torso_filtering", TIAGO_torso_filt_)) { /////////////////
+    if (!nh.getParam("TIAGO_torso_filtering", TIAGO_torso_filt_)) { 
       ROS_WARN("associatePose - Failed to get param 'TIAGO_torso_filt_' - setting to defualt: 'false'");
       TIAGO_torso_filt_ = false;
     }
@@ -251,7 +251,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
       octomap_msgs::GetOctomap srv;
       if (OCTOMAP_client_.call(srv)) {
         if (srv.response.map.data.size() > 0) {
-          ROS_INFO("Octomap received from /octomap_binary service");/////////
+          ROS_INFO("Octomap received from /octomap_binary service");
           octomap_msgs::Octomap octomap = srv.response.map;
           octomap::AbstractOcTree* abstract_tree = octomap_msgs::msgToMap(octomap);
           collision_octree_ = (octomap::OcTree*) abstract_tree;
@@ -273,7 +273,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
       srv.request.components.components = moveit_msgs::PlanningSceneComponents::OCTOMAP;
       if (OCTOMAP_client_.call(srv)) {
         if (srv.response.scene.world.octomap.octomap.data.size() > 0) {
-          ROS_INFO("Octomap received from /get_planning_scene service");/////////
+          ROS_INFO("Octomap received from /get_planning_scene service");
           octomap_msgs::Octomap octomap = srv.response.scene.world.octomap.octomap;
           octomap::AbstractOcTree* abstract_tree = octomap_msgs::msgToMap(octomap);
           collision_octree_ = (octomap::OcTree*) abstract_tree;
@@ -294,14 +294,14 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
       nh.getParam("OGM2d_topic",OGM2d_topic_);
       OGM2d_rcvd_ = false;
       OGM2d_sub_ = nh.subscribe(OGM2d_topic_, 1, &Discretization::OGM2d_CB, this);
-      int wait=0;///////////
-      while(!OGM2d_rcvd_ && wait<10){///////////
+      int wait=0;
+      while(!OGM2d_rcvd_ && wait<10){
         ROS_INFO("Waiting to receive occupancy grid map from %s - %d",OGM2d_topic_.c_str(), wait);
         wait+=1;
         ros::Duration(0.1).sleep();
         ros::spinOnce();
       }
-      if(wait==10){////////////review
+      if(wait==10){
         ROS_ERROR("TIMEDOUT ON WAITING FOR %s", OGM2d_topic_.c_str());
         return;
       }
@@ -354,11 +354,10 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
           continue;
         }
         //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
-        double tolerance = 0.4;//////////////////////////////// quite likely too big but for now i keep it like this
+        double tolerance = 0.4;// quite likely too big but for now i keep it like this
         tf2::Matrix3x3 rotation_matrix(new_trans_quat);
         tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector then check it is close to vertical
         if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
-          //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);////
           continue;
         }else{// adjust orientation to vertical 
           double roll, pitch, yaw;
@@ -369,13 +368,12 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
             new_trans_quat = q_new;
             new_trns.setRotation(new_trans_quat);
         }
-        //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]);////
 
       }else{ // arm base pose (other methods)
         if((new_trans_vec[2]<-resolution/2)){ // remove positions that are below ground (with some allowance)
           continue;           
         }
-        if(TIAGO_torso_filt_){ //// extra robot specific filtering
+        if(TIAGO_torso_filt_){ // extra robot specific filtering
           if(planning_group=="arm"){
             if((new_trans_vec[2]>1.232||new_trans_vec[2]<0.89)){ //outside robot's fisical boundaries (torso_lift_link's height)
               continue;           
@@ -386,14 +384,12 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
             }
           }
           //filter out poses that don't have the z axis close to the perpendicular to the ground (valid for navigation)
-          double tolerance = 0.4; ////////////// bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
+          double tolerance = 0.4; //bigger than what it should but for now i keep it, adjust in move_ to_bp_TIAGO
           tf2::Matrix3x3 rotation_matrix(new_trans_quat);
           tf2::Vector3 z_axis = rotation_matrix.getColumn(2); // Get the z axis vector then check it is close to vertical 
           if(!(fabs(z_axis.x()) < tolerance && fabs(z_axis.y()) < tolerance && fabs(z_axis.z() - 1.0) < tolerance)){
-            //ROS_INFO("ORIENT NOT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]); /////
             continue;
           }else{// adjust orientation to vertical 
-            if(IKValid_filt_){ /////////////////////////////////////////
               double roll, pitch, yaw;
               tf2::Matrix3x3(new_trans_quat).getRPY(roll, pitch, yaw);
               tf2::Quaternion q_new;
@@ -403,13 +399,12 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
               new_trns.setRotation(new_trans_quat);
             }
           }
-        //ROS_INFO("ORIENT OK: %f %f %f %f",new_trans_quat[0],new_trans_quat[1],new_trans_quat[2],new_trans_quat[3]); /////
         }
       }
 
       if(OGM2d_rcvd_ && arm_pose ){ // FILTERING WITH OCCUPANCY GRID MAP FOR ARM POSES 
         tf2::Vector3 check_trans_vec;
-        /////if(arm_pose){ // i need to find the corresponding robot base pose to check the robot base pose against the costmap
+        
           tf2::Transform robot_pose_trns;
           if(TIAGO_torso_filt_){ // adjust orientation to vertical to make sure that the costmap check is correct for the robot tiago on the ground
             tf2::Transform tiago_trns;
@@ -425,9 +420,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
             robot_pose_trns = new_trns*arm_to_root_tf_;
           }
           check_trans_vec = robot_pose_trns.getOrigin();
-        ////}else{ // already is a robot root pose
-        ////  check_trans_vec = new_trans_vec;
-        ////}
+
         //COMPUTE COST IN THAT POSITION
           // Convert world coordinates to map indices
           int mx = static_cast<int>((check_trans_vec[0]  - ogm_2d_.info.origin.position.x) / ogm_2d_.info.resolution);
@@ -444,7 +437,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
         //CHECK THE VALIDITY
           if(cost>OGM2d_cost_lim_){
             ROS_DEBUG("POINT FILTERED OUT");
-            continue; //// skip the rest of the for cycle code = don't store the pose into trns_col and cloud
+            continue; // skip the rest of the for cycle code = don't store the pose into trns_col and cloud
           } 
       }
 
@@ -478,9 +471,9 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
   // Get bounding box OF THE UNION MAP AT THIS POINT for checking search validity
   double min_x, min_y, min_z, max_x, max_y, max_z;
   base_poses_octree.getBoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
-//  ROS_DEBUG("associatePoses: BOUNDING BOX x:[ %f : %f] , y:[ %f : %f] , z:[ %f : %f]", min_x, max_x, min_y, max_y, min_z, max_z);
+  ROS_DEBUG("associatePoses: BOUNDING BOX x:[ %f : %f] , y:[ %f : %f] , z:[ %f : %f]", min_x, max_x, min_y, max_y, min_z, max_z);
 
-  int sphCount=0;/////////////////////////
+  int sphCount=0;
   // add all base poses from cloud to an octree
   for (int i = 0; i < spCenter.size(); i++){
     pcl::PointXYZ searchPoint;
@@ -513,11 +506,10 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
       //CHECK THE VALIDITY
         if(cost>OGM2d_cost_lim_){
           ROS_DEBUG("POINT FILTERED OUT");
-          continue; //// skip the rest of the for cycle code = don't store the pose into trns_col and cloud
+          continue; // skip the rest of the for cycle code = don't store the pose into trns_col and cloud
         } 
       }      
-      sphCount+=1;/////////////////////////////
-      //// other option for filtering with OGM - discarted
+      sphCount+=1;
       base_poses_octree.voxelSearch(searchPoint, pointIdxVec);
                 
       if (pointIdxVec.size() > 0){
@@ -553,10 +545,6 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
           // Get the base pose for a given index found in a voxel
           std::vector< double > base_pose_vec;
           base_pose_vec.reserve(3);
-          //std::vector< float > position = trns_col[pointIdxVec[j]].first;
-          //base_pose_vec.push_back(double(position[0]));
-          //base_pose_vec.push_back(double(position[1]));
-          //base_pose_vec.push_back(double(position[2]));
           base_pose_vec.push_back(voxel_pos[0]);
           base_pose_vec.push_back(voxel_pos[1]);
           base_pose_vec.push_back(voxel_pos[2]);
@@ -568,7 +556,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
 
           // FILTER OUT POSES DON'T GIVE A VALID JOINT SOLUTION
           if(IKValid_filt_){
-            //if(!use_IKFast_)   -  IRL i should always be able to use this bc i always have moveit going anyway
+            
             geometry_msgs::Pose base_pose;
 
             if(arm_pose){ // if it is a arm base pose then I need to transform it to the robot base pose
@@ -592,10 +580,10 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
             }else{ // if it is a robot base pose
               utility::vectorToPose(base_pose_vec, base_pose);
             }
-            ////ROS_INFO("base pose test: %f %f %f %f %f %f %f",base_pose.position.x,base_pose.position.y,base_pose.position.z,base_pose.orientation.x,base_pose.orientation.y,base_pose.orientation.z,base_pose.orientation.w);
+            
             bool valid = false;
             for(int k=0; k < grasp_poses.size(); ++k){
-              /////ROS_INFO("grasp pose test: %f %f %f %f %f %f %f",grasp_poses[k].position.x,grasp_poses[k].position.y,grasp_poses[k].position.z,grasp_poses[k].orientation.x,grasp_poses[k].orientation.y,grasp_poses[k].orientation.z,grasp_poses[k].orientation.w);
+              
               std::vector<double> sol = reach.getValidIKSol(base_pose, robot_state_ptr, grasp_poses[k]);
               if(sol.size() != 0){ //found 1 valid sol
                 valid=true;
@@ -606,7 +594,7 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
               }
             }
             if(!valid){ // no valid ik sol found - discard the pose
-              ////ROS_INFO("discarted");////
+              
               continue;
             }
           }
@@ -616,10 +604,10 @@ void Discretization::associatePose(std::multimap< std::vector< double >, std::ve
     }
   }
 
-  ROS_INFO("//////////////////////////// dimensione for graspxIRM = %d",(grasp_poses.size()*PoseColFilter.size()));
-  ROS_INFO("//////////////////////////// trns_col size = %d", trns_col.size());
-  ROS_INFO("//////////////////////////// for spCenter = %d", spCenter.size());
-  ROS_INFO("//////////////////////////// sfere per cui fa il voxel search = %d", sphCount);
+  //ROS_INFO("//////////////////////////// dimensione for graspxIRM = %d",(grasp_poses.size()*PoseColFilter.size()));
+  //ROS_INFO("//////////////////////////// trns_col size = %d", trns_col.size());
+  //ROS_INFO("//////////////////////////// for spCenter = %d", spCenter.size());
+  //ROS_INFO("//////////////////////////// sfere per cui fa il voxel search = %d", sphCount);
   
 }
 

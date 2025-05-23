@@ -56,7 +56,7 @@ void AddWayPoint::onInitialize()
       ROS_INFO("Received fixed frame for plugin: %s", target_frame_.c_str());
   } else {
       ROS_WARN("Failed to get param 'param_name' - setting to defualt: 'world'");
-      target_frame_ = "world"; ////////////////
+      target_frame_ = "world"; 
   }
 
   place_base = new PlaceBase();

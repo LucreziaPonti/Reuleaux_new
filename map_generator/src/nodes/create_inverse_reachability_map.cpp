@@ -73,15 +73,7 @@ ros::init(argc, argv, "create_inverse_reachability_map");
       std::string new_base_name = base_name + "_INVERSE";
       file = new_base_name + ext;
       filename = path + file;
-/*/////////////////////////////////////////////////////////////
-      float res;
-      hdf5_dataset::Hdf5Dataset h5_res(argv[1]);
-      h5_res.open();
-      h5_res.getResolution(res);
-      h5_res.close();
-      file =  str(boost::format("%s_r%d_IRM.h5") % utility::getRobotName() % res);
-      filename = path + file;
-      */
+
     }
   }
 
@@ -134,7 +126,7 @@ ros::init(argc, argv, "create_inverse_reachability_map");
 
     ROS_INFO("Resolution: %f", resolution);
 
-    discretization::Discretization sd;///////////////////////
+    discretization::Discretization sd;
 
     octomap::point3d origin = octomap::point3d(0, 0, 0);  // As these map is independent of any task points, it is centered around origin.
                                         // For dependent maps, the whole map will be transformed to that certain task

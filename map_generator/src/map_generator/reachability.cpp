@@ -96,14 +96,11 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
        geometry_msgs::Pose reach_pose= ws.WsSpheres[i].poses[j];
        bool is_reachable = getIKSolution(reach_pose, planning_frame_, state);
        if(is_reachable){
-         ////ROS_DEBUG("SUCCESS: Pose was reached!");
          std::vector<double> sp_pose;
          utility::poseToVector(reach_pose, sp_pose);
          ws_map.insert(std::make_pair(sp_vec, sp_pose));
        } else {
-         ////ROS_DEBUG("FAIL: Pose was not reached");
        }
-       /////ROS_DEBUG("===============================");
      }
    }
    for(utility::MultiMap::iterator it=ws_map.begin(); it!=ws_map.end();++it)
@@ -143,10 +140,9 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
 
  int ReachAbility::getValidIKCount(const geometry_msgs::Pose base_pose, moveit::core::RobotStatePtr robot_state_ptr, const geometry_msgs::Pose grasp_pose)
   {
-    ////ROS_DEBUG("getValidIKCount - start ");/////
     moveit::core::RobotState robot_state = *robot_state_ptr;
-    //ROS_INFO("getValidIKCount - robot state received:"); ////
-    ////robot_state.printStateInfo();
+    //ROS_INFO("getValidIKCount - robot state received:"); 
+    //robot_state.printStateInfo();
 
     std::vector<std::string> joint_names = group_->getJointNames();
     const moveit::core::JointModelGroup* joint_model_group_ = robot_state.getJointModelGroup(group_name_);
@@ -155,9 +151,7 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
     // Create the new state for the virtual_joint - to be used in the robot state for the ik
     Eigen::Isometry3d base_pose_eigen;
     tf::poseMsgToEigen(base_pose, base_pose_eigen);
-    ////ROS_DEBUG("getValidIKCount - base pose = %f %f %f %f %f %f %f", base_pose.position.x, base_pose.position.y, base_pose.position.z, base_pose.orientation.x, base_pose.orientation.y, base_pose.orientation.z, base_pose.orientation.w); //////
-    ////ROS_DEBUG("getValidIKCount - grasp pose = %f %f %f %f %f %f %f", grasp_pose.position.x, grasp_pose.position.y, grasp_pose.position.z, grasp_pose.orientation.x, grasp_pose.orientation.y, grasp_pose.orientation.z, grasp_pose.orientation.w); //////
-    std::vector<double> vj_pos;
+   std::vector<double> vj_pos;
     if(robot_state.getJointModel("virtual_joint")->getTypeName() == "Planar"){
         vj_pos.resize(3);
         vj_pos[0] = base_pose.position.x;
@@ -167,7 +161,6 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
         double roll, pitch, yaw;
         m.getRPY(roll, pitch, yaw);
         vj_pos[2] = yaw; // theta angle
-        ////ROS_DEBUG("getValidIKCount - vj_pos PLANAR = %f %f %f ", vj_pos[0], vj_pos[1], vj_pos[2]);/////
     }else if(robot_state.getJointModel("virtual_joint")->getTypeName() == "Floating"){
         vj_pos.resize(7);
         vj_pos[0] = base_pose.position.x;
@@ -177,11 +170,10 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
         vj_pos[4] = base_pose.orientation.y;
         vj_pos[5] = base_pose.orientation.z;
         vj_pos[6] = base_pose.orientation.w;
-        ////ROS_DEBUG("getValidIKCount - vj_pos FLOATING = %f %f %f %f %f %f %f", vj_pos[0], vj_pos[1], vj_pos[2],vj_pos[3], vj_pos[4], vj_pos[5], vj_pos[6]);/////
     }
     robot_state.setJointPositions("virtual_joint", vj_pos);
 
-    if(joint_names[0]=="arm_1_joint"){ // //// MANINO PER FAR FUNZIONARE BENE CON ARM
+    if(joint_names[0]=="arm_1_joint"){ // MANINO PER FAR FUNZIONARE BENE CON ARM
       const double* torso_val = robot_state.getJointPositions("torso_lift_joint");
       std::vector<double> torso_val_vec;
       torso_val_vec.push_back(double(torso_val[0]+base_pose.position.z));
@@ -199,9 +191,7 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
     req.group_name = group_name_;
     req.avoid_collisions = check_collision_;
     req.timeout.fromSec(0.1);
-    //ROS_INFO("getValidIKCount - request: frame: %s pose %f %f %f %f %f %f %f",req.pose_stamped.header.frame_id.c_str(), req.pose_stamped.pose.position.x, req.pose_stamped.pose.position.y, req.pose_stamped.pose.position.z, req.pose_stamped.pose.orientation.x, req.pose_stamped.pose.orientation.y, req.pose_stamped.pose.orientation.z, req.pose_stamped.pose.orientation.w); //////
-    //ROS_INFO("getValidIKCount - request: group name %s", req.group_name.c_str()); //////
-    //ROS_INFO("getValidIKCount - request: avoid collisions %d", req.avoid_collisions); //////
+    
     std::vector<std::vector<double>> all_joint_values;
     
     for (int i = 0; i < 50; ++i) // iterate an arbitrary number of times
@@ -209,7 +199,7 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
       // Update the robot state with random values for the manipulator joints and the base pose for the virtual joint
       robot_state.setToRandomPositions(joint_model_group_);
       robot_state.update();
-      ////robot_state.printStateInfo();
+      //robot_state.printStateInfo();
       moveit::core::robotStateToRobotStateMsg(robot_state, req.robot_state); // insert the robot state in the request
       
       moveit_msgs::GetPositionIK srv;
@@ -227,30 +217,25 @@ ReachAbility::ReachAbility(ros::NodeHandle& node, std::string group_name, bool c
               double joint_val = std::trunc(srv.response.solution.joint_state.position[position] * 1000) / 1000;
               joint_solution.push_back(joint_val);
           }
-          // check that the solution obtained now is NOT one we already have ////////////////////////////// 
+          // check that the solution obtained now is NOT one we already have 
           bool is_new_solution = true;
           for (const auto& existing_solution : all_joint_values) {
               if (joint_solution == existing_solution) {
                   is_new_solution = false;
-                  ////ROS_INFO("Duplicate solution found, not adding to the list.");
                   break;
               }
           }
           if (is_new_solution) {
             //save the solution found
-            /////ROS_INFO("joint solution: %f %f %f %f %f %f %F", joint_solution[0], joint_solution[1], joint_solution[2], joint_solution[3], joint_solution[4], joint_solution[5], joint_solution[6]);
             all_joint_values.push_back(joint_solution);
           }
           
-        }else{
-            ////ROS_DEBUG("IK FAIL - error code: %d", srv.response.error_code.val);
         }
       }else{
         ROS_ERROR("Failed to call IK service");
         return -999999;
       }
     }
-    ////ROS_DEBUG("getValidIKCount - return: %d", all_joint_values.size());/////
     return all_joint_values.size();
   }
 
@@ -263,9 +248,7 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
 
     // The robot state received needs to be a VALID state
     // Create the new state for the virtual_joint - to be used in the robot state for the ik
-    ////ROS_INFO("getValidIKSol - base pose: %f %f %f %f %f %f %f ",base_pose.position.x,base_pose.position.y,base_pose.position.z,base_pose.orientation.x,base_pose.orientation.y,base_pose.orientation.z,base_pose.orientation.w);////
-    /////rmv///Eigen::Isometry3d base_pose_eigen;
-    /////rmv///tf::poseMsgToEigen(base_pose, base_pose_eigen);
+    
     std::vector<double> vj_pos;
     if(robot_state.getJointModel("virtual_joint")->getTypeName() == "Planar"){
         vj_pos.resize(3);
@@ -276,7 +259,6 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
         double roll, pitch, yaw;
         m.getRPY(roll, pitch, yaw);
         vj_pos[2] = yaw; // theta angle
-        ////ROS_INFO("getValidIKSol - VJ= %f %f %f", vj_pos[0],vj_pos[1],vj_pos[2]); ///////
     }else if(robot_state.getJointModel("virtual_joint")->getTypeName() == "Floating"){
         vj_pos.resize(7);
         vj_pos[0] = base_pose.position.x;
@@ -289,14 +271,14 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
     }
     robot_state.setJointPositions("virtual_joint", vj_pos);
     
-    if(joint_names[0]=="arm_1_joint"){ // //// MANINO PER FAR FUNZIONARE BENE CON ARM
+    if(joint_names[0]=="arm_1_joint"){ //  MANINO PER FAR FUNZIONARE BENE CON ARM
       const double* torso_val = robot_state.getJointPositions("torso_lift_joint");
       std::vector<double> torso_val_vec;
       torso_val_vec.push_back(double(torso_val[0]+base_pose.position.z));
       if(torso_val_vec[0]>0.34){
         torso_val_vec[0]=0.34;
       }
-      ////ROS_INFO("getValidIKSol - torso val: %f",torso_val_vec[0]);
+      //ROS_INFO("getValidIKSol - torso val: %f",torso_val_vec[0]);
       robot_state.setJointPositions("torso_lift_joint", torso_val_vec);
     }
 
@@ -308,7 +290,6 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
     geometry_msgs::PoseStamped pose_st;
     pose_st.header.frame_id = planning_frame_;
     pose_st.pose = grasp_pose;
-    ////ROS_INFO("grasp pose: %f %f %f %f %f %f %f",grasp_pose.position.x,grasp_pose.position.y,grasp_pose.position.z,grasp_pose.orientation.x,grasp_pose.orientation.y,grasp_pose.orientation.z,grasp_pose.orientation.w);
     req.pose_stamped = pose_st;
     req.group_name = group_name_;
     req.avoid_collisions = check_collision_;
@@ -321,7 +302,7 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
       // Update the robot state with random values for the manipulator joints and the base pose for the virtual joint
       robot_state.setToRandomPositions(joint_model_group_);
       robot_state.update();
-      ////robot_state.printStateInfo();
+      //robot_state.printStateInfo();
       moveit::core::robotStateToRobotStateMsg(robot_state, req.robot_state); // insert the robot state in the request
       
       moveit_msgs::GetPositionIK srv;
@@ -339,12 +320,7 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
               joint_solution.push_back(joint_val);
           }
           // return the first valid solution that is found
-          ////ROS_INFO("getValidIKSol - found a sol");
           return joint_solution;
-
-        }else{
-          ////ROS_INFO("getValidIKSol - ik fail");
-            ////ROS_DEBUG("IK FAIL - error code: %d", srv.response.error_code.val);
         }
       }else{
         ROS_ERROR("Failed to call IK service");
@@ -354,7 +330,6 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
       }
     }
     joint_solution.clear(); //just to make sure but SHOULD NOT be needed
-    ////ROS_INFO("getValidIKSol - no sol found");
     return joint_solution; // no solution found
   }
 

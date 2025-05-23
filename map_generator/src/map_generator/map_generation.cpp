@@ -49,7 +49,7 @@ void mapGeneration::centerWorkspace(){
   centr->setInitialWorkspace(filtered_ws_);
   centr->createCenteredWorkspace();
   centr->getFinalWorkspace(centered_ws_);
-  utility::getPoseAndSphereSize(centered_ws_, final_sp_size_, final_pose_size_);///////rmv
+  utility::getPoseAndSphereSize(centered_ws_, final_sp_size_, final_pose_size_);
   delete centr;
 }
 
@@ -77,14 +77,14 @@ void mapGeneration::saveWorkspace()
 void mapGeneration::getArmPose(geometry_msgs::Pose& arm_pose)
 {
   std::string planning_frame = group_->getPlanningFrame();
-  ROS_INFO("Planning frame is %s", planning_frame.c_str()); ////////
+  ROS_INFO("Planning frame is %s", planning_frame.c_str()); 
   
   moveit::core::RobotModelConstPtr robot_model = group_->getRobotModel();
   std::vector<std::string> full_link_names = robot_model->getLinkModelNames();
   std::vector<std::string> arm_link_names = group_->getLinkNames();
   int position = std::find(full_link_names.begin(), full_link_names.end(), arm_link_names[0]) -full_link_names.begin() ;
   std::string arm_parent_link = full_link_names[position-1];
-  ROS_INFO("Arm parent link is %s", arm_parent_link.c_str()); ////
+  ROS_INFO("Arm parent link is %s", arm_parent_link.c_str()); 
 
   if (arm_parent_link == planning_frame){
     geometry_msgs::Pose empty_pose;

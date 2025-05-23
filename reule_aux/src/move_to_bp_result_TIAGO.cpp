@@ -88,7 +88,7 @@ void store_data(std::vector<reule_aux::BP_Res> poses, reule_aux::BP_Res best){
             geometry_msgs::PoseStamped robot_pose;
             tf2::doTransform(arm_pose,robot_pose,arm_to_robot);
             sorted_poses[i] = robot_pose.pose;
-            ROS_DEBUG("///////// TRANSFORMED sorted pose i=%d : (%f,%f,%f) (%f,%f,%f,%f)",i,sorted_poses[i].position.x, sorted_poses[i].position.y, sorted_poses[i].position.z, sorted_poses[i].orientation.x,sorted_poses[i].orientation.y, sorted_poses[i].orientation.z,sorted_poses[i].orientation.w);
+            ROS_DEBUG(" TRANSFORMED sorted pose i=%d : (%f,%f,%f) (%f,%f,%f,%f)",i,sorted_poses[i].position.x, sorted_poses[i].position.y, sorted_poses[i].position.z, sorted_poses[i].orientation.x,sorted_poses[i].orientation.y, sorted_poses[i].orientation.z,sorted_poses[i].orientation.w);
             // compute the torso values
             torso_values[i]=sorted_poses[i].position.z;
             if (torso_values[i] < 0.03) {
@@ -96,7 +96,7 @@ void store_data(std::vector<reule_aux::BP_Res> poses, reule_aux::BP_Res best){
             } else if (torso_values[i] >= 0.34) {
                 torso_values[i] = 0.34;
             }
-            ROS_DEBUG("///// torso value %d = %f",i, torso_values[i]);
+            ROS_DEBUG(" torso value %d = %f",i, torso_values[i]);
             // move the position on the ground (into base_footprint)
             sorted_poses[i].position.z = 0.0;
         }
@@ -116,13 +116,13 @@ void bp_sub_cb(const reule_aux::BP_Res::ConstPtr& msg){
         appo.score=msg->score;
         appo.robot_root_frame=msg->robot_root_frame;
         appo.arm_root_frame=msg->arm_root_frame;
-        ROS_DEBUG("/////// bp_sub_cb: received pose: (%f,%f,%f) (%f,%f,%f,%f)",appo.pose.position.x, appo.pose.position.y, appo.pose.position.z, appo.pose.orientation.x,appo.pose.orientation.y, appo.pose.orientation.z,appo.pose.orientation.w);
-        ROS_DEBUG("/////// bp_sub_cb : other data: score:%f - robot roor: %s - arm root: %s ", appo.score, appo.robot_root_frame.c_str(), appo.arm_root_frame.c_str());
+        ROS_DEBUG(" bp_sub_cb: received pose: (%f,%f,%f) (%f,%f,%f,%f)",appo.pose.position.x, appo.pose.position.y, appo.pose.position.z, appo.pose.orientation.x,appo.pose.orientation.y, appo.pose.orientation.z,appo.pose.orientation.w);
+        ROS_DEBUG(" bp_sub_cb : other data: score:%f - robot roor: %s - arm root: %s ", appo.score, appo.robot_root_frame.c_str(), appo.arm_root_frame.c_str());
         if(appo.best_pose){
             ROS_INFO("move_to_bp_result : best pose received - storing all data");
             best_pose_ = appo;
             store_data(received_bp_,best_pose_);
-            ROS_INFO("move_to_bp_result : all data stored - services are now available"); /////
+            ROS_INFO("move_to_bp_result : all data stored - services are now available"); 
         }else{
             received_bp_.push_back(appo);
         }
@@ -133,7 +133,7 @@ void bp_sub_cb(const reule_aux::BP_Res::ConstPtr& msg){
 
 
 bool move_torso(double torso_value){
-    ROS_DEBUG("////// start move torso with value : %f ", torso_value);
+    ROS_DEBUG(" start move torso with value : %f ", torso_value);
     // Client for action to control the torso joint
     actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/torso_controller/follow_joint_trajectory", true);
     if (!ac.waitForServer(ros::Duration(5.0))) {
@@ -224,17 +224,17 @@ geometry_msgs::Pose fixValidOrientation(geometry_msgs::Pose pose){
 
 bool move_nav_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res){
     if(!base_poses_.empty()){
-        ROS_DEBUG("///// called nav srvs");
+        ROS_DEBUG(" called nav srvs");
         actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ac("move_base", true);
         //wait for the action server to come up
         while(!ac.waitForServer(ros::Duration(5.0))){
             ROS_INFO("Waiting for the move_base action server to come up");
         }
-        ROS_DEBUG("///// action srvr ok - start attempts");
+        ROS_DEBUG(" action srvr ok - start attempts");
         for(int i=0;i<base_poses_.size();i++){
-            ROS_DEBUG("///// move_nav_cb : attempting pose %d",i);
+            ROS_DEBUG(" move_nav_cb : attempting pose %d",i);
             move_base_msgs::MoveBaseGoal goal;
-            goal.target_pose.header.frame_id = fixed_frame_; /////// this ok or maybe better to use map?
+            goal.target_pose.header.frame_id = fixed_frame_; 
             goal.target_pose.header.stamp = ros::Time::now();
 
             goal.target_pose.pose= fixValidOrientation(base_poses_[i]); // the pose is always a pose of the root of the robot 
@@ -293,9 +293,9 @@ int main(int argc, char **argv){
         ROS_DEBUG("PB - Received fixed frame for plugin: %s", fixed_frame_.c_str());
     } else {
         ROS_WARN("PB - Failed to get param 'param_name' - setting to defualt: 'world'");
-        fixed_frame_ = "odom"; ////////////////
+        fixed_frame_ = "world"; 
     }
-    ROS_DEBUG("//// setup ok, fixed frame: %s", fixed_frame_.c_str());
+    ROS_DEBUG(" setup ok, fixed frame: %s", fixed_frame_.c_str());
 
     ros::Subscriber bp_sub = n.subscribe("reule_aux/bp_results", 1000, bp_sub_cb);
     

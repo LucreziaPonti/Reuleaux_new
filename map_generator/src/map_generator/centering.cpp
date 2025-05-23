@@ -74,7 +74,7 @@ float Centering::truncateToDecimalPlaces(float value, int decimalPlaces) {
         //ROS_DEBUG("Centering pose %d of sphere %d",j+1,i+1);
         geometry_msgs::Pose centered_pose;
         transformTaskpose(arm_base_pose_,ws.WsSpheres[i].poses[j],centered_pose);
-        //// extra thing bc it does wierd stuff (change signs in some values)
+        // extra thing bc it does wierd stuff (change signs in some values)
         centered_pose.orientation.x=ws.WsSpheres[i].poses[j].orientation.x;
         centered_pose.orientation.y=ws.WsSpheres[i].poses[j].orientation.y;
         centered_pose.orientation.z=ws.WsSpheres[i].poses[j].orientation.z;
