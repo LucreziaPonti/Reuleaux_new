@@ -1117,7 +1117,9 @@ void PlaceBase::showBaseLocationsbyArmModel(std::vector< geometry_msgs::Pose > p
       geometry_msgs::Pose robot_base_pose;
       tf::poseEigenToMsg(arm_base_tf*transform_arm_to_root_, robot_base_pose);
       for(int j=0;j<GRASP_POSES_.size();j++){
-        std::vector<double> joint_soln = reach_->getValidIKSol(robot_base_pose, robot_state_, GRASP_POSES_[j]);
+        ROS_INFO("check grasp %d",j);
+        std::vector<double> joint_soln;
+        joint_soln = reach_->getValidIKSol(robot_base_pose, robot_state_, GRASP_POSES_[j]);
         if(joint_soln.size() == 1){ // means i got the error msg - could not call the IKrequest service
           score_=-999999; // to signal the error outside the function
           return;

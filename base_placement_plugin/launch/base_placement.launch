@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name = "use_IKFast" default="true"/>
+    <arg name = "use_IKFast" default="false"/>
     <arg name = "fixed_frame" default="odom" doc="fixed frame for the base placement usually corresponds to the parent of the virtual joint of the robot"/>
     <arg name = "bp_results" default="false"/>
     

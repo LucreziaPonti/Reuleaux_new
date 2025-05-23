@@ -2,16 +2,16 @@
     <launch>
 
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
-    <arg name = "use_IKFast" default="true"/>
-    <arg name = "fixed_frame" default="odom"/>
+    <arg name = "use_IKFast" default="false"/>
+    <arg name = "fixed_frame" default="world"/>
     <arg name="bp_results" default="false"/>
 
     <!--PARAMETERS FOR THE FILTERING of the union map - used within map_generator>discretization::associatePose-->
-    <arg name = "IKValid_filtering" default="false"/>
+    <arg name = "IKValid_filtering" default="true"/>
     
     <arg name = "OCTOMAP_SRV_filtering" default="false"/>
     
-    <arg name = "OCTOMAP_PS_filtering" default="false"/> 
+    <arg name = "OCTOMAP_PS_filtering" default="true"/> 
 
     <arg name="OGM2d_filtering" default="false"/>
     <arg name = "OGM2d_topic" default="/move_base/global_costmap/costmap"/>
@@ -21,7 +21,7 @@
 
     <!--*********ADJUST DEPENDING ON THE ROBOT YOU WANT TO USE!!*******-->
     <!--ROBOTS USED: rm_63_b_moveit_config  -  tiago_moveit_config   -->
-    <include file="$(find tiago_moveit_config)/launch/demo.launch"> 
+    <include file="$(find rm_63_b_moveit_config)/launch/demo.launch"> 
         <arg name="use_rviz" value="true"/>  
     </include>
 

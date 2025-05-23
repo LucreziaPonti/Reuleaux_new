@@ -288,7 +288,7 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
         vj_pos[6] = base_pose.orientation.w;
     }
     robot_state.setJointPositions("virtual_joint", vj_pos);
-
+    
     if(joint_names[0]=="arm_1_joint"){ // //// MANINO PER FAR FUNZIONARE BENE CON ARM
       const double* torso_val = robot_state.getJointPositions("torso_lift_joint");
       std::vector<double> torso_val_vec;
@@ -296,17 +296,19 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
       if(torso_val_vec[0]>0.34){
         torso_val_vec[0]=0.34;
       }
+      ////ROS_INFO("getValidIKSol - torso val: %f",torso_val_vec[0]);
       robot_state.setJointPositions("torso_lift_joint", torso_val_vec);
     }
 
     robot_state.update();
-
+    
 
     //Create and start the setup for the request
     moveit_msgs::PositionIKRequest req;
     geometry_msgs::PoseStamped pose_st;
     pose_st.header.frame_id = planning_frame_;
     pose_st.pose = grasp_pose;
+    ////ROS_INFO("grasp pose: %f %f %f %f %f %f %f",grasp_pose.position.x,grasp_pose.position.y,grasp_pose.position.z,grasp_pose.orientation.x,grasp_pose.orientation.y,grasp_pose.orientation.z,grasp_pose.orientation.w);
     req.pose_stamped = pose_st;
     req.group_name = group_name_;
     req.avoid_collisions = check_collision_;
@@ -337,9 +339,11 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
               joint_solution.push_back(joint_val);
           }
           // return the first valid solution that is found
+          ////ROS_INFO("getValidIKSol - found a sol");
           return joint_solution;
 
         }else{
+          ////ROS_INFO("getValidIKSol - ik fail");
             ////ROS_DEBUG("IK FAIL - error code: %d", srv.response.error_code.val);
         }
       }else{
@@ -350,6 +354,7 @@ std::vector<double> ReachAbility::getValidIKSol(const geometry_msgs::Pose base_p
       }
     }
     joint_solution.clear(); //just to make sure but SHOULD NOT be needed
+    ////ROS_INFO("getValidIKSol - no sol found");
     return joint_solution; // no solution found
   }
 
